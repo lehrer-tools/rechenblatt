@@ -85,8 +85,8 @@ button.secondary:hover { background: #444; }
       <div class="tab active" onclick="switchTab('aufgabenart')">Aufgabenart</div>
       <div class="tab" onclick="switchTab('layout')">Layout</div>
       <div class="tab" onclick="switchTab('platzhalter')">Platzhalter</div>
-      <div class="tab" onclick="switchTab('loesungen')">Loesungen</div>
-      <div class="tab" onclick="switchTab('ueberschrift')">Ueberschrift</div>
+      <div class="tab" onclick="switchTab('loesungen')">Lösungen</div>
+      <div class="tab" onclick="switchTab('ueberschrift')">Überschrift</div>
     </div>
 
     <!-- TAB: Aufgabenart -->
@@ -112,25 +112,25 @@ button.secondary:hover { background: #444; }
         </fieldset>
 
         <fieldset style="margin-top:6px">
-          <legend>Zehneruebergang</legend>
+          <legend>Zehnerübergang</legend>
           <label><input type="radio" name="zehneruebergang" value="egal" checked> egal</label>
-          <label><input type="radio" name="zehneruebergang" value="ohne"> ohne Zehneruebergang</label>
-          <label><input type="radio" name="zehneruebergang" value="mit"> mit Zehneruebergang</label>
-          <label><input type="checkbox" id="cbErgZehner"> Ergebnis auf naechsten Zehner</label>
+          <label><input type="radio" name="zehneruebergang" value="ohne"> ohne Zehnerübergang</label>
+          <label><input type="radio" name="zehneruebergang" value="mit"> mit Zehnerübergang</label>
+          <label><input type="checkbox" id="cbErgZehner"> Ergebnis auf nächsten Zehner (aufrunden)</label>
         </fieldset>
 
         <fieldset style="margin-top:6px">
-          <legend>Hunderteruebergang</legend>
+          <legend>Hunderterübergang</legend>
           <label><input type="radio" name="hunderteruebergang" value="egal" checked> egal</label>
-          <label><input type="radio" name="hunderteruebergang" value="ohne"> ohne Hunderteruebergang</label>
-          <label><input type="radio" name="hunderteruebergang" value="mit"> mit Hunderteruebergang</label>
-          <label><input type="checkbox" id="cbErgHunderter"> Ergebnis auf naechsten Hunderter</label>
+          <label><input type="radio" name="hunderteruebergang" value="ohne"> ohne Hunderterübergang</label>
+          <label><input type="radio" name="hunderteruebergang" value="mit"> mit Hunderterübergang</label>
+          <label><input type="checkbox" id="cbErgHunderter"> Ergebnis auf nächsten Hunderter (aufrunden)</label>
         </fieldset>
 
         <fieldset style="margin-top:6px">
           <legend>Negative Zahlen (Plus/Minus)</legend>
           <label><input type="radio" name="negativePM" value="ohne" checked> keine negativen Zahlen</label>
-          <label><input type="radio" name="negativePM" value="mit"> negative Zahlen moeglich</label>
+          <label><input type="radio" name="negativePM" value="mit"> negative Zahlen möglich</label>
           <label><input type="radio" name="negativePM" value="immer"> immer negative Zahlen</label>
           <label><input type="checkbox" id="cbKlammernPM"> Positive Zahlen klammern: (+5)</label>
         </fieldset>
@@ -151,7 +151,7 @@ button.secondary:hover { background: #444; }
             <label><input type="checkbox" class="cbStellenwert" value="ZEpZ"> ZE + Z (Zweistellig + Zehner)</label>
             <label><input type="checkbox" class="cbStellenwert" value="ZEpZE"> ZE + ZE (Zweistellig + Zweistellig)</label>
             <label><input type="checkbox" class="cbStellenwert" value="HZEpHZE"> HZE + HZE (Dreistellig + Dreistellig)</label>
-            <p class="info">Gilt fuer Addition und Subtraktion. Operanden werden vertauscht falls noetig.</p>
+            <p class="info">Gilt für Addition und Subtraktion. Operanden werden vertauscht falls nötig.</p>
           </div>
         </fieldset>
       </fieldset>
@@ -190,7 +190,7 @@ button.secondary:hover { background: #444; }
             <label><input type="checkbox" class="cbEinmaleins" value="20"> 20er</label>
           </div>
           <label><input type="checkbox" id="cbTauschMult"> Tauschaufgaben zulassen (z.B. 5*4 beim 5er)</label>
-          <label><input type="checkbox" id="cbSchwereHaeufiger"> Schwere Einmaleins-Rechnungen haeufiger</label>
+          <label><input type="checkbox" id="cbSchwereHaeufiger"> Schwere Einmaleins-Rechnungen häufiger</label>
           <label><input type="checkbox" id="cbQuadrat"> Quadrataufgaben (z.B. 7*7)</label>
           <div class="row">
             <span>Quadrataufgaben bis:</span>
@@ -256,7 +256,7 @@ button.secondary:hover { background: #444; }
             <label><input type="checkbox" class="cbEinmaleinsDiv" value="10" checked> 10er</label>
           </div>
           <label><input type="checkbox" id="cbTauschDiv"> Tauschaufgaben (z.B. 32:4 beim 8er)</label>
-          <label><input type="checkbox" id="cbDivSchwereHaeufiger"> Schwere Einmaleins-Rechnungen haeufiger</label>
+          <label><input type="checkbox" id="cbDivSchwereHaeufiger"> Schwere Einmaleins-Rechnungen häufiger</label>
           <fieldset style="margin-top:4px">
             <legend>Divisor/Ergebnis-Bereiche</legend>
             <label><input type="checkbox" id="cbDivkzkz" checked> Divisor &lt;= 10, Ergebnis &lt;= 10</label>
@@ -267,7 +267,7 @@ button.secondary:hover { background: #444; }
         <fieldset style="margin-top:6px">
           <legend>Rest</legend>
           <label><input type="radio" name="divRest" value="ohne" checked> kein Rest</label>
-          <label><input type="radio" name="divRest" value="mit"> Rest moeglich</label>
+          <label><input type="radio" name="divRest" value="mit"> Rest möglich</label>
           <label><input type="radio" name="divRest" value="immer"> immer Rest</label>
         </fieldset>
         <fieldset id="fsDivSchriftlich" class="hidden" style="margin-top:6px">
@@ -290,15 +290,15 @@ button.secondary:hover { background: #444; }
         <fieldset style="margin-top:6px">
           <legend>Negative Zahlen (Mal/Geteilt)</legend>
           <label><input type="radio" name="negativeMG" value="ohne" checked> keine negativen Zahlen</label>
-          <label><input type="radio" name="negativeMG" value="mit"> negative Zahlen moeglich</label>
+          <label><input type="radio" name="negativeMG" value="mit"> negative Zahlen möglich</label>
           <label><input type="radio" name="negativeMG" value="immer"> immer negative Zahlen</label>
           <label><input type="checkbox" id="cbKlammernMG"> Positive Zahlen klammern: (+5)</label>
         </fieldset>
       </fieldset>
 
       <fieldset>
-        <legend>Triviale Aufgaben unterdruecken</legend>
-        <label><input type="checkbox" id="cbTrivial"> Keine Operanden/Ergebnisse betragsmaeßig kleiner als
+        <legend>Triviale Aufgaben unterdrücken</legend>
+        <label><input type="checkbox" id="cbTrivial"> Keine Operanden/Ergebnisse betragsmäßig kleiner als
           <input type="number" id="trivialMin" value="2" min="0" max="100" style="width:40px">
         </label>
         <label><input type="checkbox" id="cbKeineZehnerpot"> Keine Operatoren der Form k*10^n (k aus {0..9}, n aus N)</label>
@@ -315,7 +315,7 @@ button.secondary:hover { background: #444; }
           <input type="number" id="spalten" value="3" min="1" max="6">
           <span>Spalten</span>
         </div>
-        <label><input type="checkbox" id="cbSeiteFuellen" checked> Seite moeglichst fuellen (ignoriert Zeilen/Spalten)</label>
+        <label><input type="checkbox" id="cbSeiteFuellen" checked> Seite möglichst füllen (ignoriert Zeilen/Spalten)</label>
         <p class="info">Gesamt: <span id="aufgabenGesamt">24</span> Aufgaben</p>
       </fieldset>
 
@@ -337,7 +337,7 @@ button.secondary:hover { background: #444; }
         <label><input type="checkbox" id="cbRechenkaestchen"> Rechenkästchen (Zahlen in Einzelzellen)</label>
         <label><input type="checkbox" id="cbGespenster"> Gespensteraufgaben (einzelne Ziffern versteckt)</label>
         <div style="margin-left:18px;">
-          <label><input type="checkbox" id="cbGespensterFrage" checked> ? (Fragezeichen fuer versteckte)</label>
+          <label><input type="checkbox" id="cbGespensterFrage" checked> ? (Fragezeichen für versteckte)</label>
         </div>
         <label><input type="checkbox" id="cbTrennlinien"> Trennlinien zwischen Spalten</label>
         <label><input type="checkbox" id="cbOhneGleich"> Nur Rechnung, ohne = und Ergebnis (z.B. 324 + 7)</label>
@@ -348,7 +348,7 @@ button.secondary:hover { background: #444; }
         <label><input type="checkbox" id="cbNummerierung" checked> Aufgaben nummerieren</label>
         <label><input type="checkbox" id="cbVertikalNum"> vertikal nummerieren</label>
         <div class="row">
-          <span>Zaehlweise:</span>
+          <span>Zählweise:</span>
           <select id="numZaehlweise">
             <option value="123">1, 2, 3, ...</option>
             <option value="abc">a, b, c, ...</option>
@@ -366,7 +366,7 @@ button.secondary:hover { background: #444; }
 
       <fieldset>
         <legend>Ausrichtung</legend>
-        <label><input type="radio" name="ausrichtung" value="links" checked> linksbuendig</label>
+        <label><input type="radio" name="ausrichtung" value="links" checked> linksbündig</label>
         <label><input type="radio" name="ausrichtung" value="gleich"> Gleichheitszeichen untereinander</label>
       </fieldset>
 
@@ -383,7 +383,7 @@ button.secondary:hover { background: #444; }
           <input type="number" id="fontSizeAufgabe" value="14" min="8" max="36" style="width:45px">pt
         </div>
         <div class="row">
-          <span>Loesungsschrift:</span>
+          <span>Lösungsschrift:</span>
           <select id="fontLoesung">
             <option value="Courier New">Courier New</option>
             <option value="Arial">Arial</option>
@@ -401,7 +401,7 @@ button.secondary:hover { background: #444; }
         <legend>Platzhalteraufgaben</legend>
         <label><input type="checkbox" id="cbPlatzhalter"> Platzhalter kommen vor</label>
         <fieldset style="margin-top:6px">
-          <legend>Platzhalter duerfen an folgenden Stellen auftreten:</legend>
+          <legend>Platzhalter dürfen an folgenden Stellen auftreten:</legend>
           <label><input type="checkbox" id="cbPlatzhalterOp1" checked> 1. Operand</label>
           <label><input type="checkbox" id="cbPlatzhalterOp2" checked> 2. Operand</label>
           <label><input type="checkbox" id="cbPlatzhalterErg" checked> Ergebnis</label>
@@ -422,25 +422,25 @@ button.secondary:hover { background: #444; }
     <!-- TAB: Loesungen -->
     <div id="tab-loesungen" class="tab-content">
       <fieldset>
-        <legend>Loesungen</legend>
-        <label><input type="checkbox" id="cbLoesungSpalte"> Loesungsspalte rechts</label>
-        <label><input type="checkbox" id="cbLoesungPlatzhalter"> Loesungen auf Platzhalterstrich</label>
-        <label><input type="checkbox" id="cbLoesungUnter"> Loesung unter jede Aufgabe schreiben</label>
-        <label><input type="checkbox" id="cbLoesungDurcheinander"> Loesungen durcheinander</label>
-        <label><input type="checkbox" id="cbLoesungFooter"> Loesungen am Seitenende</label>
-        <label><input type="checkbox" id="cbQuersumme"> Quersumme der Loesungen</label>
+        <legend>Lösungen</legend>
+        <label><input type="checkbox" id="cbLoesungSpalte"> Lösungsspalte rechts</label>
+        <label><input type="checkbox" id="cbLoesungPlatzhalter"> Lösungen auf Platzhalterstrich</label>
+        <label><input type="checkbox" id="cbLoesungUnter"> Lösung unter jede Aufgabe schreiben</label>
+        <label><input type="checkbox" id="cbLoesungDurcheinander"> Lösungen durcheinander</label>
+        <label><input type="checkbox" id="cbLoesungFooter"> Lösungen am Seitenende</label>
+        <label><input type="checkbox" id="cbQuersumme"> Quersumme der Lösungen</label>
       </fieldset>
       <fieldset>
-        <legend>Loesungsblatt</legend>
-        <label><input type="checkbox" id="cbLoesungsblatt"> Separates Loesungsblatt erzeugen</label>
+        <legend>Lösungsblatt</legend>
+        <label><input type="checkbox" id="cbLoesungsblatt"> Separates Lösungsblatt erzeugen</label>
       </fieldset>
     </div>
 
-    <!-- TAB: Ueberschrift -->
+    <!-- TAB: Überschrift -->
     <div id="tab-ueberschrift" class="tab-content">
       <fieldset>
-        <legend>Ueberschrift</legend>
-        <input type="text" id="ueberschrift" value="Rechenblatt" style="width:100%; margin-bottom:6px" placeholder="z.B. Arbeitsblatt fuer Mathe">
+        <legend>Überschrift</legend>
+        <input type="text" id="ueberschrift" value="Rechenblatt" style="width:100%; margin-bottom:6px" placeholder="z.B. Arbeitsblatt für Mathe">
         <div class="row">
           <span>Schrift:</span>
           <select id="fontUeberschrift">
@@ -609,8 +609,8 @@ function genPlusAufgabe() {
 
   if (erg > zr || erg < -zr) return null;
   if (!nullErlaubt && (a === 0 || b === 0 || erg === 0)) return null;
-  if (!pruefeZehneruebergang(a, b, '+')) return null;
-  if (!pruefeHunderteruebergang(a, b, '+')) return null;
+  if (!pruefeZehnerübergang(a, b, '+')) return null;
+  if (!pruefeHunderterübergang(a, b, '+')) return null;
   if (!pruefeStellenwert(a, b, '+')) return null;
 
   return { op1: a, op2: b, operator: '+', ergebnis: erg };
@@ -647,8 +647,8 @@ function genMinusAufgabe() {
   if (Math.abs(erg) > zr) return null;
   if (negativ === 'ohne' && erg < 0) return null;
   if (!nullErlaubt && (a === 0 || b === 0 || erg === 0)) return null;
-  if (!pruefeZehneruebergang(a, b, '-')) return null;
-  if (!pruefeHunderteruebergang(a, b, '-')) return null;
+  if (!pruefeZehnerübergang(a, b, '-')) return null;
+  if (!pruefeHunderterübergang(a, b, '-')) return null;
   if (!pruefeStellenwert(a, b, '-')) return null;
 
   return { op1: a, op2: b, operator: '-', ergebnis: erg };
@@ -813,7 +813,7 @@ function genGeteiltAufgabe() {
 }
 
 // ===== FILTER =====
-function pruefeZehneruebergang(a, b, op) {
+function pruefeZehnerübergang(a, b, op) {
   const mode = getRadio('zehneruebergang');
   if (mode === 'egal') return true;
 
@@ -825,7 +825,7 @@ function pruefeZehneruebergang(a, b, op) {
   return true;
 }
 
-function pruefeHunderteruebergang(a, b, op) {
+function pruefeHunderterübergang(a, b, op) {
   const mode = getRadio('hunderteruebergang');
   if (mode === 'egal') return true;
 
@@ -1122,10 +1122,10 @@ function renderBlatt(zeigeLoesungen) {
     html += '</div>';
   }
 
-  // Loesungsspalte rechts (als echte Spalte neben dem Grid)
+  // Lösungsspalte rechts (als echte Spalte neben dem Grid)
   if (isChecked('cbLoesungSpalte') && !zeigeLoesungen) {
     html = `<div style="display:flex;gap:20px;"><div style="flex:1;">${html}</div>`;
-    html += '<div style="border-left:1px solid #ccc;padding-left:12px;font-size:12pt;"><strong>Loesungen:</strong><ol style="margin-top:4px;padding-left:18px;">';
+    html += '<div style="border-left:1px solid #ccc;padding-left:12px;font-size:12pt;"><strong>Lösungen:</strong><ol style="margin-top:4px;padding-left:18px;">';
     for (let i = 0; i < aufgaben.length; i++) {
       const a = aufgaben[i];
       html += `<li>${a.ergebnis}${a.rest ? ' R' + a.rest : ''}</li>`;
@@ -1133,15 +1133,15 @@ function renderBlatt(zeigeLoesungen) {
     html += '</ol></div></div>';
   }
 
-  // Loesungen durcheinander (Liste unten)
+  // Lösungen durcheinander (Liste unten)
   if (isChecked('cbLoesungDurcheinander') && !isChecked('cbLoesungSpalte') && !zeigeLoesungen) {
     html += renderLoesungsSpalte();
   }
 
-  // Loesungen am Seitenende (geordnet)
+  // Lösungen am Seitenende (geordnet)
   if (isChecked('cbLoesungFooter') && !zeigeLoesungen) {
     html += '<div style="margin-top:16px;border-top:1px solid #ccc;padding-top:8px;font-size:11pt;">';
-    html += '<strong>Loesungen:</strong> ';
+    html += '<strong>Lösungen:</strong> ';
     html += aufgaben.map((a, i) => `${i + 1}) ${a.ergebnis}${a.rest ? ' R' + a.rest : ''}`).join('&nbsp;&nbsp; ');
     html += '</div>';
   }
@@ -1152,7 +1152,7 @@ function renderBlatt(zeigeLoesungen) {
     html += `<div style="margin-top:12px;font-style:italic;">Quersumme: ${quersumme(sum)}</div>`;
   }
 
-  // Separates Loesungsblatt als zweite Seite
+  // Separates Lösungsblatt als zweite Seite
   if (isChecked('cbLoesungsblatt') && !zeigeLoesungen) {
     document.getElementById('loesungsblattPage').style.display = 'block';
     const loesungsContainer = document.getElementById('loesungsOutput');
@@ -1175,15 +1175,17 @@ function renderSchriftlich(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontF
     const ergStr = String(a.ergebnis);
     const maxLen = Math.max(op1Str.length, op2Str.length + 2, ergStr.length);
 
-    html += `<div style="text-align:right;position:relative;">`;
-    html += `<div>${nummerierung}${op1Str.padStart(maxLen)}</div>`;
+    html += `<div style="display:flex;align-items:start;position:relative;">`;
+    if (nummerierung) html += `<div style="white-space:nowrap;margin-right:4px;">${nummerierung}</div>`;
+    html += `<div style="text-align:right;flex:1;">`;
+    html += `<div>${op1Str.padStart(maxLen)}</div>`;
     html += `<div style="border-bottom:2px solid black;">${a.operator} ${op2Str.padStart(maxLen - 2)}</div>`;
     if (zeigeLoesungen) {
       html += `<div>${ergStr.padStart(maxLen)}</div>`;
     } else {
       html += `<div style="min-height:1.5em;">&nbsp;</div>`;
     }
-    html += `</div>`;
+    html += `</div></div>`;
   }
   html += '</div>';
   return html;
@@ -1326,7 +1328,7 @@ function renderGespensteraufgabe(aufgabe, index) {
 
 function renderLoesungsSpalte() {
   let html = '<div style="margin-top:12px;border-top:1px solid #ccc;padding-top:8px;">';
-  html += '<strong>Loesungen (durcheinander):</strong> ';
+  html += '<strong>Lösungen (durcheinander):</strong>';
   const l = aufgaben.map(a => a.ergebnis + (a.rest ? ` R${a.rest}` : ''));
   if (isChecked('cbLoesungDurcheinander')) {
     shuffle(l);
@@ -1356,7 +1358,7 @@ function renderLoesungsblatt(zeilen, spalten, spaltenAbstand, zeilenAbstand, fon
   const schriftlich = isChecked('cbSchriftlich');
 
   const gespensterFrage = isChecked('cbGespensterFrage');
-  let html = '<div style="font-weight:bold;font-size:16pt;text-align:center;margin-bottom:12px;">Loesungsblatt</div>';
+  let html = '<div style="font-weight:bold;font-size:16pt;text-align:center;margin-bottom:12px;">Lösungsblatt</div>';
   if (rechenkaestchen) {
     html += renderSchriftlichKaestchen(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontFamily, fontSize, true, false, gespensterFrage);
   } else if (schriftlich) {
@@ -1473,7 +1475,7 @@ async function inZwischenablage() {
     sel.addRange(range);
     document.execCommand('copy');
     sel.removeAllRanges();
-    alert('Text in Zwischenablage kopiert (fuer Bild-Export wird html2canvas benoetigt).');
+    alert('Text in Zwischenablage kopiert (für Bild-Export wird html2canvas benötigt).');
   }
 }
 
