@@ -1,5 +1,7 @@
 # Rechenblatt Web Edition
 
+**[Live-Demo: lehrer-tools.github.io/rechenblatt](https://lehrer-tools.github.io/rechenblatt/)**
+
 Webbasierte Neuimplementierung des Windows-Programms [Rechenblatt 3.1](https://www.pabst-software.de/doku.php?id=programme:rechenblatt:start) von Pabst-Software als einzelne HTML-Datei — ohne Abhängigkeiten, offline nutzbar, druckoptimiert.
 
 ![Übersicht](screenshots/rechenblatt-overview.png)
