@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rechenblatt 3.0 - Web Edition</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 13px; background: #f0f0f0; }
+.app { display: flex; height: 100vh; }
+.sidebar { width: 38%; min-width: 360px; max-width: 520px; background: #f8f8f8; border-right: 1px solid #ccc; overflow-y: auto; padding: 8px; }
+.preview-area { flex: 1; background: white; overflow: auto; padding: 20px; }
+.preview-page { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin: 0 auto; padding: 15mm; min-height: 297mm; width: 210mm; position: relative; }
+
+/* Tabs */
+.tabs { display: flex; border-bottom: 2px solid #0078d4; margin-bottom: 8px; }
+.tab { padding: 6px 12px; cursor: pointer; background: #e8e8e8; border: 1px solid #ccc; border-bottom: none; margin-right: 2px; border-radius: 4px 4px 0 0; font-size: 12px; }
+.tab.active { background: #0078d4; color: white; }
+
+/* Form Controls */
+fieldset { border: 1px solid #ccc; padding: 8px; margin-bottom: 8px; border-radius: 4px; }
+legend { font-weight: bold; padding: 0 4px; font-size: 12px; color: #333; }
+label { display: block; margin: 3px 0; cursor: pointer; font-size: 12px; }
+label.inline { display: inline-block; margin-right: 12px; }
+input[type="number"] { width: 60px; padding: 2px 4px; border: 1px solid #aaa; border-radius: 3px; }
+input[type="text"] { padding: 2px 4px; border: 1px solid #aaa; border-radius: 3px; }
+input[type="checkbox"], input[type="radio"] { margin-right: 4px; vertical-align: middle; }
+select { padding: 2px 4px; border: 1px solid #aaa; border-radius: 3px; }
+button { padding: 5px 12px; background: #0078d4; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; margin: 3px 2px; }
+button:hover { background: #005a9e; }
+button.secondary { background: #666; }
+button.secondary:hover { background: #444; }
+
+.row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+.col { display: flex; flex-direction: column; gap: 4px; }
+
+/* Toolbar */
+.toolbar { display: flex; gap: 4px; padding: 6px 0; border-bottom: 1px solid #ddd; margin-bottom: 8px; flex-wrap: wrap; }
+
+/* Task display */
+.aufgabe { font-family: 'Courier New', monospace; white-space: pre; }
+.aufgabe-grid { display: grid; gap: 0; }
+.aufgabe-cell { padding: 2px 8px; }
+
+/* Rechenkästchen */
+.rechenkaestchen { display: inline-block; border: 1px solid #333; width: 1.8em; height: 1.8em; text-align: center; line-height: 1.8em; margin: 1px; font-family: inherit; }
+
+/* Trennlinien */
+.col-trennlinie { border-right: 1px solid #ccc; padding-right: 8px; }
+
+/* Print */
+@page { margin: 0; size: A4; }
+@media print {
+  .sidebar, .toolbar { display: none !important; }
+  .app { display: block; }
+  .preview-area { padding: 0; overflow: visible; }
+  .preview-page { box-shadow: none; margin: 0; padding: 15mm; width: 210mm; min-height: auto; }
+  #loesungsblattPage { page-break-before: always; margin-top: 0 !important; }
+}
+
+.hidden { display: none; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.einmaleins-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin: 4px 0; }
+.einmaleins-grid label { font-size: 11px; }
+
+.info { font-size: 11px; color: #666; margin: 4px 0; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="toolbar">
+      <button onclick="neueAufgaben()" title="Neue Aufgaben generieren">Neue Aufgaben</button>
+      <button onclick="aufgabenMischen()" title="Aufgaben mischen">Mischen</button>
+      <button onclick="drucken()" title="Drucken">Drucken</button>
+      <button class="secondary" onclick="inZwischenablage()" title="Als Bild kopieren">Kopieren</button>
+      <button class="secondary" onclick="speichern()" title="Einstellungen speichern">Speichern</button>
+      <button class="secondary" onclick="laden()" title="Einstellungen laden">Laden</button>
+      <button class="secondary" onclick="standardSpeichern()" title="Aktuelle Einstellungen als Standard speichern">Standard speichern</button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('aufgabenart')">Aufgabenart</div>
+      <div class="tab" onclick="switchTab('layout')">Layout</div>
+      <div class="tab" onclick="switchTab('platzhalter')">Platzhalter</div>
+      <div class="tab" onclick="switchTab('loesungen')">Loesungen</div>
+      <div class="tab" onclick="switchTab('ueberschrift')">Ueberschrift</div>
+    </div>
+
+    <!-- TAB: Aufgabenart -->
+    <div id="tab-aufgabenart" class="tab-content active">
+      <fieldset>
+        <legend>Addition(+), Subtraktion(-)</legend>
+        <label><input type="checkbox" id="cbPlus" checked> Addition (+)</label>
+        <label><input type="checkbox" id="cbMinus" checked> Subtraktion (-)</label>
+
+        <fieldset style="margin-top:6px">
+          <legend>Zahlenraum bis einschliesslich</legend>
+          <label class="inline"><input type="radio" name="zahlenraum" value="10"> 10</label>
+          <label class="inline"><input type="radio" name="zahlenraum" value="20" checked> 20</label>
+          <label class="inline"><input type="radio" name="zahlenraum" value="100"> 100</label>
+          <label class="inline"><input type="radio" name="zahlenraum" value="1000"> 1000</label>
+          <label class="inline"><input type="radio" name="zahlenraum" value="10000"> 10000</label>
+          <label class="inline"><input type="radio" name="zahlenraum" value="100000"> 100000</label>
+          <label class="inline"><input type="radio" name="zahlenraum" value="1000000"> 1000000</label>
+          <div class="row" style="margin-top:4px">
+            <label class="inline"><input type="radio" name="zahlenraum" value="custom"> bis:</label>
+            <input type="number" id="zahlenraumBis" value="20" min="2" max="9999999">
+          </div>
+        </fieldset>
+
+        <fieldset style="margin-top:6px">
+          <legend>Zehneruebergang</legend>
+          <label><input type="radio" name="zehneruebergang" value="egal" checked> egal</label>
+          <label><input type="radio" name="zehneruebergang" value="ohne"> ohne Zehneruebergang</label>
+          <label><input type="radio" name="zehneruebergang" value="mit"> mit Zehneruebergang</label>
+          <label><input type="checkbox" id="cbErgZehner"> Ergebnis auf naechsten Zehner</label>
+        </fieldset>
+
+        <fieldset style="margin-top:6px">
+          <legend>Hunderteruebergang</legend>
+          <label><input type="radio" name="hunderteruebergang" value="egal" checked> egal</label>
+          <label><input type="radio" name="hunderteruebergang" value="ohne"> ohne Hunderteruebergang</label>
+          <label><input type="radio" name="hunderteruebergang" value="mit"> mit Hunderteruebergang</label>
+          <label><input type="checkbox" id="cbErgHunderter"> Ergebnis auf naechsten Hunderter</label>
+        </fieldset>
+
+        <fieldset style="margin-top:6px">
+          <legend>Negative Zahlen (Plus/Minus)</legend>
+          <label><input type="radio" name="negativePM" value="ohne" checked> keine negativen Zahlen</label>
+          <label><input type="radio" name="negativePM" value="mit"> negative Zahlen moeglich</label>
+          <label><input type="radio" name="negativePM" value="immer"> immer negative Zahlen</label>
+          <label><input type="checkbox" id="cbKlammernPM"> Positive Zahlen klammern: (+5)</label>
+        </fieldset>
+
+        <fieldset style="margin-top:6px">
+          <legend>Allgemeine Eigenschaften</legend>
+          <label><input type="checkbox" id="cbNullKommtVor" checked> Null kommt vor</label>
+        </fieldset>
+
+        <fieldset style="margin-top:6px">
+          <legend>Stellenwert-Kombinationen</legend>
+          <label><input type="radio" name="rechenarten" value="alle" checked> Alle</label>
+          <label><input type="radio" name="rechenarten" value="nurfolgende"> Nur folgende:</label>
+          <div id="stellenwertOptionen" class="hidden" style="margin-left:16px;margin-top:4px">
+            <label><input type="checkbox" class="cbStellenwert" value="EpE" checked> E + E (Einer + Einer)</label>
+            <label><input type="checkbox" class="cbStellenwert" value="ZpE" checked> Z + E (Zehner + Einer)</label>
+            <label><input type="checkbox" class="cbStellenwert" value="ZEpE" checked> ZE + E (Zweistellig + Einer)</label>
+            <label><input type="checkbox" class="cbStellenwert" value="ZEpZ"> ZE + Z (Zweistellig + Zehner)</label>
+            <label><input type="checkbox" class="cbStellenwert" value="ZEpZE"> ZE + ZE (Zweistellig + Zweistellig)</label>
+            <label><input type="checkbox" class="cbStellenwert" value="HZEpHZE"> HZE + HZE (Dreistellig + Dreistellig)</label>
+            <p class="info">Gilt fuer Addition und Subtraktion. Operanden werden vertauscht falls noetig.</p>
+          </div>
+        </fieldset>
+      </fieldset>
+
+      <fieldset>
+        <legend>Multiplikation (*)</legend>
+        <label><input type="checkbox" id="cbMal"> Multiplikation (*)</label>
+        <fieldset style="margin-top:6px">
+          <legend>Rechenart</legend>
+          <label><input type="radio" name="multArt" value="einmaleins" checked> Einmaleins</label>
+          <label><input type="radio" name="multArt" value="schriftlich"> schriftlich</label>
+          <label><input type="radio" name="multArt" value="besondere"> Besondere Produkte</label>
+          <label><input type="radio" name="multArt" value="intervall"> Faktoren innerhalb von Intervallen</label>
+        </fieldset>
+        <fieldset id="fsEinmaleins" style="margin-top:6px">
+          <legend>Welche "Einmaleins"?</legend>
+          <div class="einmaleins-grid">
+            <label><input type="checkbox" class="cbEinmaleins" value="2" checked> 2er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="3" checked> 3er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="4" checked> 4er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="5" checked> 5er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="6" checked> 6er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="7" checked> 7er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="8" checked> 8er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="9" checked> 9er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="10" checked> 10er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="11"> 11er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="12"> 12er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="13"> 13er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="14"> 14er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="15"> 15er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="16"> 16er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="17"> 17er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="18"> 18er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="19"> 19er</label>
+            <label><input type="checkbox" class="cbEinmaleins" value="20"> 20er</label>
+          </div>
+          <label><input type="checkbox" id="cbTauschMult"> Tauschaufgaben zulassen (z.B. 5*4 beim 5er)</label>
+          <label><input type="checkbox" id="cbSchwereHaeufiger"> Schwere Einmaleins-Rechnungen haeufiger</label>
+          <label><input type="checkbox" id="cbQuadrat"> Quadrataufgaben (z.B. 7*7)</label>
+          <div class="row">
+            <span>Quadrataufgaben bis:</span>
+            <input type="number" id="quadratBis" value="10" min="2" max="20">
+          </div>
+          <fieldset style="margin-top:4px">
+            <legend>Faktor-Bereiche</legend>
+            <label><input type="checkbox" id="cbMultkzkz" checked> Beide Faktoren &lt;= 10</label>
+            <label><input type="checkbox" id="cbMultkzgz"> 1. Faktor &lt;= 10, 2. Faktor &gt;= 10</label>
+            <label><input type="checkbox" id="cbMultgzgz"> Beide Faktoren &gt;= 10</label>
+          </fieldset>
+        </fieldset>
+        <fieldset id="fsMultSchriftlich" class="hidden" style="margin-top:6px">
+          <legend>Zahlenraum (schriftlich)</legend>
+          <div class="row"><span>1. Faktor Stellen:</span>
+            <input type="number" id="multFaktor1Min" value="2" min="1" max="6">
+            <span>bis</span>
+            <input type="number" id="multFaktor1Max" value="3" min="1" max="6">
+          </div>
+          <div class="row"><span>2. Faktor Stellen:</span>
+            <input type="number" id="multFaktor2Min" value="1" min="1" max="6">
+            <span>bis</span>
+            <input type="number" id="multFaktor2Max" value="1" min="1" max="6">
+          </div>
+        </fieldset>
+        <fieldset id="fsBesondereProdukte" class="hidden" style="margin-top:6px">
+          <legend>Besondere Produkte</legend>
+          <label><input type="checkbox" id="cbEmalZ" checked> Einer mal Zehner (z.B. 5 * 40)</label>
+          <label><input type="checkbox" id="cbZEmalZ"> Zweistellig mal Zehner (z.B. 34 * 20)</label>
+        </fieldset>
+        <fieldset id="fsMultIntervall" class="hidden" style="margin-top:6px">
+          <legend>Faktoren innerhalb von Intervallen</legend>
+          <div class="row"><span>1. Faktor von</span>
+            <input type="number" id="intFaktor1Von" value="2" min="1"> <span>bis</span>
+            <input type="number" id="intFaktor1Bis" value="10" min="1">
+          </div>
+          <div class="row"><span>2. Faktor von</span>
+            <input type="number" id="intFaktor2Von" value="2" min="1"> <span>bis</span>
+            <input type="number" id="intFaktor2Bis" value="10" min="1">
+          </div>
+        </fieldset>
+      </fieldset>
+
+      <fieldset>
+        <legend>Division (:)</legend>
+        <label><input type="checkbox" id="cbGeteilt"> Division (:)</label>
+        <fieldset style="margin-top:6px">
+          <legend>Rechenart</legend>
+          <label><input type="radio" name="divArt" value="einmaleins" checked> Einmaleins</label>
+          <label><input type="radio" name="divArt" value="schriftlich"> schriftlich</label>
+        </fieldset>
+        <fieldset style="margin-top:6px">
+          <legend>Welche "Einmaleins" (Division)?</legend>
+          <div class="einmaleins-grid">
+            <label><input type="checkbox" class="cbEinmaleinsDiv" value="2" checked> 2er</label>
+            <label><input type="checkbox" class="cbEinmaleinsDiv" value="3" checked> 3er</label>
+            <label><input type="checkbox" class="cbEinmaleinsDiv" value="4" checked> 4er</label>
+            <label><input type="checkbox" class="cbEinmaleinsDiv" value="5" checked> 5er</label>
+            <label><input type="checkbox" class="cbEinmaleinsDiv" value="6" checked> 6er</label>
+            <label><input type="checkbox" class="cbEinmaleinsDiv" value="7" checked> 7er</label>
+            <label><input type="checkbox" class="cbEinmaleinsDiv" value="8" checked> 8er</label>
+            <label><input type="checkbox" class="cbEinmaleinsDiv" value="9" checked> 9er</label>
+            <label><input type="checkbox" class="cbEinmaleinsDiv" value="10" checked> 10er</label>
+          </div>
+          <label><input type="checkbox" id="cbTauschDiv"> Tauschaufgaben (z.B. 32:4 beim 8er)</label>
+          <label><input type="checkbox" id="cbDivSchwereHaeufiger"> Schwere Einmaleins-Rechnungen haeufiger</label>
+          <fieldset style="margin-top:4px">
+            <legend>Divisor/Ergebnis-Bereiche</legend>
+            <label><input type="checkbox" id="cbDivkzkz" checked> Divisor &lt;= 10, Ergebnis &lt;= 10</label>
+            <label><input type="checkbox" id="cbDivgzkz"> Divisor &gt;= 10, Ergebnis &lt;= 10</label>
+            <label><input type="checkbox" id="cbDivgzgz"> Divisor &gt;= 10, Ergebnis &gt;= 10</label>
+          </fieldset>
+        </fieldset>
+        <fieldset style="margin-top:6px">
+          <legend>Rest</legend>
+          <label><input type="radio" name="divRest" value="ohne" checked> kein Rest</label>
+          <label><input type="radio" name="divRest" value="mit"> Rest moeglich</label>
+          <label><input type="radio" name="divRest" value="immer"> immer Rest</label>
+        </fieldset>
+        <fieldset id="fsDivSchriftlich" class="hidden" style="margin-top:6px">
+          <legend>Zahlenraum (schriftlich)</legend>
+          <div class="row"><span>Dividend Stellen:</span>
+            <input type="number" id="divDividendMin" value="3" min="1" max="6">
+            <span>bis</span>
+            <input type="number" id="divDividendMax" value="4" min="1" max="6">
+          </div>
+          <div class="row"><span>Divisor Stellen:</span>
+            <input type="number" id="divDivisorMin" value="1" min="1" max="6">
+            <span>bis</span>
+            <input type="number" id="divDivisorMax" value="2" min="1" max="6">
+          </div>
+        </fieldset>
+        <div class="row" style="margin-top:4px">
+          <span>Kleinstes Ergebnis der Division:</span>
+          <input type="number" id="minErgDiv" value="1" min="0" max="100">
+        </div>
+        <fieldset style="margin-top:6px">
+          <legend>Negative Zahlen (Mal/Geteilt)</legend>
+          <label><input type="radio" name="negativeMG" value="ohne" checked> keine negativen Zahlen</label>
+          <label><input type="radio" name="negativeMG" value="mit"> negative Zahlen moeglich</label>
+          <label><input type="radio" name="negativeMG" value="immer"> immer negative Zahlen</label>
+          <label><input type="checkbox" id="cbKlammernMG"> Positive Zahlen klammern: (+5)</label>
+        </fieldset>
+      </fieldset>
+
+      <fieldset>
+        <legend>Triviale Aufgaben unterdruecken</legend>
+        <label><input type="checkbox" id="cbTrivial"> Keine Operanden/Ergebnisse betragsmaeßig kleiner als
+          <input type="number" id="trivialMin" value="2" min="0" max="100" style="width:40px">
+        </label>
+        <label><input type="checkbox" id="cbKeineZehnerpot"> Keine Operatoren der Form k*10^n (k aus {0..9}, n aus N)</label>
+      </fieldset>
+    </div>
+
+    <!-- TAB: Layout -->
+    <div id="tab-layout" class="tab-content">
+      <fieldset>
+        <legend>Aufgabenzahl</legend>
+        <div class="row">
+          <input type="number" id="zeilen" value="8" min="1" max="30">
+          <span>Zeilen zu je</span>
+          <input type="number" id="spalten" value="3" min="1" max="6">
+          <span>Spalten</span>
+        </div>
+        <label><input type="checkbox" id="cbSeiteFuellen" checked> Seite moeglichst fuellen (ignoriert Zeilen/Spalten)</label>
+        <p class="info">Gesamt: <span id="aufgabenGesamt">24</span> Aufgaben</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Abstände</legend>
+        <div class="row">
+          <span>Spaltenabstand (mm):</span>
+          <input type="number" id="spaltenAbstand" value="15" min="0" max="50">
+        </div>
+        <div class="row">
+          <span>Zeilenabstand (mm):</span>
+          <input type="number" id="zeilenAbstand" value="8" min="0" max="30">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Darstellung</legend>
+        <label><input type="checkbox" id="cbSchriftlich"> Schriftliche Rechnung (untereinander)</label>
+        <label><input type="checkbox" id="cbRechenkaestchen"> Rechenkästchen (Zahlen in Einzelzellen)</label>
+        <label><input type="checkbox" id="cbGespenster"> Gespensteraufgaben (einzelne Ziffern versteckt)</label>
+        <div style="margin-left:18px;">
+          <label><input type="checkbox" id="cbGespensterFrage" checked> ? (Fragezeichen fuer versteckte)</label>
+        </div>
+        <label><input type="checkbox" id="cbTrennlinien"> Trennlinien zwischen Spalten</label>
+        <label><input type="checkbox" id="cbOhneGleich"> Nur Rechnung, ohne = und Ergebnis (z.B. 324 + 7)</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Nummerierung</legend>
+        <label><input type="checkbox" id="cbNummerierung" checked> Aufgaben nummerieren</label>
+        <label><input type="checkbox" id="cbVertikalNum"> vertikal nummerieren</label>
+        <div class="row">
+          <span>Zaehlweise:</span>
+          <select id="numZaehlweise">
+            <option value="123">1, 2, 3, ...</option>
+            <option value="abc">a, b, c, ...</option>
+          </select>
+        </div>
+        <div class="row">
+          <span>Zeichen nach Nummer:</span>
+          <input type="text" id="numZeichen" value=")" style="width:30px">
+        </div>
+        <div class="row">
+          <span>Abstand Nummer-Aufgabe:</span>
+          <input type="number" id="abstNummerAufgabe" value="3" min="0" max="20">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Ausrichtung</legend>
+        <label><input type="radio" name="ausrichtung" value="links" checked> linksbuendig</label>
+        <label><input type="radio" name="ausrichtung" value="gleich"> Gleichheitszeichen untereinander</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Schriftarten</legend>
+        <div class="row">
+          <span>Aufgabenschrift:</span>
+          <select id="fontAufgabe">
+            <option value="Courier New">Courier New</option>
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+          </select>
+          <input type="number" id="fontSizeAufgabe" value="14" min="8" max="36" style="width:45px">pt
+        </div>
+        <div class="row">
+          <span>Loesungsschrift:</span>
+          <select id="fontLoesung">
+            <option value="Courier New">Courier New</option>
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+          </select>
+          <input type="number" id="fontSizeLoesung" value="14" min="8" max="36" style="width:45px">pt
+        </div>
+      </fieldset>
+    </div>
+
+    <!-- TAB: Platzhalter -->
+    <div id="tab-platzhalter" class="tab-content">
+      <fieldset>
+        <legend>Platzhalteraufgaben</legend>
+        <label><input type="checkbox" id="cbPlatzhalter"> Platzhalter kommen vor</label>
+        <fieldset style="margin-top:6px">
+          <legend>Platzhalter duerfen an folgenden Stellen auftreten:</legend>
+          <label><input type="checkbox" id="cbPlatzhalterOp1" checked> 1. Operand</label>
+          <label><input type="checkbox" id="cbPlatzhalterOp2" checked> 2. Operand</label>
+          <label><input type="checkbox" id="cbPlatzhalterErg" checked> Ergebnis</label>
+        </fieldset>
+        <fieldset style="margin-top:6px">
+          <legend>Bei diesen Rechenarten kommen Platzhalter vor:</legend>
+          <label><input type="checkbox" id="cbPlatzhalterPM" checked> Addition/Subtraktion</label>
+          <label><input type="checkbox" id="cbPlatzhalterMD"> Multiplikation/Division</label>
+        </fieldset>
+        <fieldset style="margin-top:6px">
+          <legend>Platzhalter sehen so aus:</legend>
+          <label><input type="radio" name="platzhalterArt" value="einfach" checked> Einfacher Platzhalterstrich ___</label>
+          <label><input type="radio" name="platzhalterArt" value="doppelt"> Doppelter Platzhalterstrich</label>
+        </fieldset>
+      </fieldset>
+    </div>
+
+    <!-- TAB: Loesungen -->
+    <div id="tab-loesungen" class="tab-content">
+      <fieldset>
+        <legend>Loesungen</legend>
+        <label><input type="checkbox" id="cbLoesungSpalte"> Loesungsspalte rechts</label>
+        <label><input type="checkbox" id="cbLoesungPlatzhalter"> Loesungen auf Platzhalterstrich</label>
+        <label><input type="checkbox" id="cbLoesungUnter"> Loesung unter jede Aufgabe schreiben</label>
+        <label><input type="checkbox" id="cbLoesungDurcheinander"> Loesungen durcheinander</label>
+        <label><input type="checkbox" id="cbLoesungFooter"> Loesungen am Seitenende</label>
+        <label><input type="checkbox" id="cbQuersumme"> Quersumme der Loesungen</label>
+      </fieldset>
+      <fieldset>
+        <legend>Loesungsblatt</legend>
+        <label><input type="checkbox" id="cbLoesungsblatt"> Separates Loesungsblatt erzeugen</label>
+      </fieldset>
+    </div>
+
+    <!-- TAB: Ueberschrift -->
+    <div id="tab-ueberschrift" class="tab-content">
+      <fieldset>
+        <legend>Ueberschrift</legend>
+        <input type="text" id="ueberschrift" value="Rechenblatt" style="width:100%; margin-bottom:6px" placeholder="z.B. Arbeitsblatt fuer Mathe">
+        <div class="row">
+          <span>Schrift:</span>
+          <select id="fontUeberschrift">
+            <option value="Arial" selected>Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+          </select>
+          <input type="number" id="fontSizeUeberschrift" value="18" min="10" max="48" style="width:45px">pt
+          <label class="inline"><input type="checkbox" id="cbUeberschriftFett" checked> Fett</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Arbeitsanweisung</legend>
+        <input type="text" id="arbeitsanweisung" value="" style="width:100%" placeholder="z.B. Rechne schriftlich!">
+        <div class="row" style="margin-top:4px">
+          <span>Schrift:</span>
+          <select id="fontArbeitsanweisung">
+            <option value="Arial" selected>Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+          </select>
+          <input type="number" id="fontSizeArbeitsanweisung" value="12" min="8" max="36" style="width:45px">pt
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Namensfeld</legend>
+        <label><input type="checkbox" id="cbNamensfeld" checked> Name: _______________ Datum: ___________</label>
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="preview-area" id="previewArea">
+    <div class="preview-page" id="previewPage">
+      <div id="renderOutput"></div>
+    </div>
+    <div class="preview-page" id="loesungsblattPage" style="display:none;margin-top:20px;">
+      <div id="loesungsOutput"></div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".rbl,.json" style="display:none" onchange="dateiLaden(event)">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<script>
+'use strict';
+
+// ===== STATE =====
+let aufgaben = [];
+
+// ===== HELPERS =====
+function getVal(id) { return document.getElementById(id).value; }
+function getNum(id) { return parseInt(document.getElementById(id).value, 10) || 0; }
+function isChecked(id) { return document.getElementById(id).checked; }
+function getRadio(name) { const r = document.querySelector(`input[name="${name}"]:checked`); return r ? r.value : ''; }
+function randInt(min, max) { if (min > max) return null; return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function getZahlenraum() {
+  const v = getRadio('zahlenraum');
+  if (v === 'custom') return getNum('zahlenraumBis');
+  return parseInt(v, 10);
+}
+
+function getStellenwertRange(zr) {
+  const mode = getRadio('rechenarten');
+  if (mode === 'alle') return null;
+
+  const aktiv = [];
+  document.querySelectorAll('.cbStellenwert:checked').forEach(cb => aktiv.push(cb.value));
+  if (aktiv.length === 0) return null;
+
+  const kompatibel = aktiv.filter(typ => {
+    switch (typ) {
+      case 'EpE': return zr >= 2;
+      case 'ZpE': return zr >= 11;
+      case 'ZEpE': return zr >= 11;
+      case 'ZEpZ': return zr >= 20;
+      case 'ZEpZE': return zr >= 20;
+      case 'HZEpHZE': return zr >= 200;
+    }
+    return true;
+  });
+
+  if (kompatibel.length === 0) return null;
+
+  const typ = kompatibel[randInt(0, kompatibel.length - 1)];
+  switch (typ) {
+    case 'EpE':
+      return { genA: () => randInt(1, Math.min(9, zr)), genB: () => randInt(1, Math.min(9, zr)) };
+    case 'ZpE':
+      return { genA: () => generateTensNumber(10, Math.min(90, zr)), genB: () => randInt(1, 9) };
+    case 'ZEpE':
+      return { genA: () => randInt(10, Math.min(99, zr)), genB: () => randInt(1, 9) };
+    case 'ZEpZ':
+      return { genA: () => randInt(10, Math.min(99, zr)), genB: () => generateTensNumber(10, Math.min(90, zr)) };
+    case 'ZEpZE':
+      return { genA: () => randInt(10, Math.min(99, zr)), genB: () => randInt(10, Math.min(99, zr)) };
+    case 'HZEpHZE':
+      return { genA: () => randInt(100, Math.min(999, zr)), genB: () => randInt(100, Math.min(999, zr)) };
+  }
+  return null;
+}
+
+// ===== AUFGABEN-GENERATOR (TGSAufgabengenerator) =====
+function generiereAufgabe() {
+  const arten = [];
+  if (isChecked('cbPlus')) arten.push('+');
+  if (isChecked('cbMinus')) arten.push('-');
+  if (isChecked('cbMal')) arten.push('*');
+  if (isChecked('cbGeteilt')) arten.push(':');
+  if (arten.length === 0) return null;
+
+  const art = arten[randInt(0, arten.length - 1)];
+  let aufgabe = null;
+  let maxVersuche = 500;
+
+  while (!aufgabe && maxVersuche-- > 0) {
+    switch (art) {
+      case '+': aufgabe = genPlusAufgabe(); break;
+      case '-': aufgabe = genMinusAufgabe(); break;
+      case '*': aufgabe = genMalAufgabe(); break;
+      case ':': aufgabe = genGeteiltAufgabe(); break;
+    }
+    if (aufgabe && !pruefeFilter(aufgabe)) aufgabe = null;
+    if (aufgabe && (art === '*' || art === ':')) {
+      const negMG = getRadio('negativeMG');
+      if (negMG === 'immer' || (negMG === 'mit' && Math.random() > 0.5)) {
+        aufgabe.op1 = -Math.abs(aufgabe.op1);
+        if (art === '*') {
+          aufgabe.ergebnis = aufgabe.op1 * aufgabe.op2;
+        } else {
+          aufgabe.ergebnis = -Math.abs(aufgabe.ergebnis);
+        }
+      }
+    }
+  }
+  return aufgabe;
+}
+
+function genPlusAufgabe() {
+  const zr = getZahlenraum();
+  const negativ = getRadio('negativePM');
+  const nullErlaubt = isChecked('cbNullKommtVor');
+  let a, b, erg;
+  const minVal = nullErlaubt ? 0 : 1;
+
+  const subtypeRange = getStellenwertRange(zr);
+
+  if (subtypeRange) {
+    a = subtypeRange.genA();
+    b = subtypeRange.genB();
+    erg = a + b;
+  } else if (negativ === 'ohne') {
+    a = randInt(minVal, zr);
+    b = randInt(minVal, zr - a);
+    erg = a + b;
+  } else if (negativ === 'immer') {
+    a = randInt(-zr, -1);
+    b = randInt(-zr, zr);
+    erg = a + b;
+  } else {
+    a = randInt(-zr, zr);
+    b = randInt(-zr, zr);
+    erg = a + b;
+  }
+
+  if (erg > zr || erg < -zr) return null;
+  if (!nullErlaubt && (a === 0 || b === 0 || erg === 0)) return null;
+  if (!pruefeZehneruebergang(a, b, '+')) return null;
+  if (!pruefeHunderteruebergang(a, b, '+')) return null;
+  if (!pruefeStellenwert(a, b, '+')) return null;
+
+  return { op1: a, op2: b, operator: '+', ergebnis: erg };
+}
+
+function genMinusAufgabe() {
+  const zr = getZahlenraum();
+  const negativ = getRadio('negativePM');
+  const nullErlaubt = isChecked('cbNullKommtVor');
+  let a, b, erg;
+  const minVal = nullErlaubt ? 0 : 1;
+
+  const subtypeRange = getStellenwertRange(zr);
+
+  if (subtypeRange) {
+    a = subtypeRange.genA();
+    b = subtypeRange.genB();
+    if (b > a) [a, b] = [b, a];
+    erg = a - b;
+  } else if (negativ === 'ohne') {
+    a = randInt(minVal, zr);
+    b = randInt(minVal, a);
+    erg = a - b;
+  } else if (negativ === 'immer') {
+    a = randInt(-zr, zr - 1);
+    b = randInt(a + 1, zr);
+    erg = a - b;
+  } else {
+    a = randInt(minVal, zr);
+    b = randInt(minVal, zr);
+    erg = a - b;
+  }
+
+  if (Math.abs(erg) > zr) return null;
+  if (negativ === 'ohne' && erg < 0) return null;
+  if (!nullErlaubt && (a === 0 || b === 0 || erg === 0)) return null;
+  if (!pruefeZehneruebergang(a, b, '-')) return null;
+  if (!pruefeHunderteruebergang(a, b, '-')) return null;
+  if (!pruefeStellenwert(a, b, '-')) return null;
+
+  return { op1: a, op2: b, operator: '-', ergebnis: erg };
+}
+
+function genMalAufgabe() {
+  const multArt = getRadio('multArt');
+
+  if (multArt === 'einmaleins') {
+    const reihen = [];
+    document.querySelectorAll('.cbEinmaleins:checked').forEach(cb => reihen.push(parseInt(cb.value, 10)));
+    if (reihen.length === 0) return null;
+
+    // Quadrataufgaben
+    if (isChecked('cbQuadrat') && Math.random() > 0.7) {
+      const qb = getNum('quadratBis');
+      const a = randInt(2, qb);
+      return { op1: a, op2: a, operator: '*', ergebnis: a * a };
+    }
+
+    const reihe = reihen[randInt(0, reihen.length - 1)];
+    let faktor = randInt(1, 10);
+
+    // Faktor-Bereiche pruefen
+    const kzkz = isChecked('cbMultkzkz');
+    const kzgz = isChecked('cbMultkzgz');
+    const gzgz = isChecked('cbMultgzgz');
+
+    let a = reihe, b = faktor;
+    if (kzgz && !kzkz && Math.random() > 0.5) {
+      b = randInt(10, 20);
+    } else if (gzgz && !kzkz) {
+      a = randInt(10, 20);
+      b = randInt(10, 20);
+    }
+
+    // Schwere Einmaleins haeufiger
+    if (isChecked('cbSchwereHaeufiger') && Math.random() > 0.5) {
+      const schwer = reihen.filter(r => r >= 6);
+      if (schwer.length > 0) {
+        const sr = schwer[randInt(0, schwer.length - 1)];
+        a = sr;
+        b = randInt(6, 10);
+      }
+    }
+
+    if (isChecked('cbTauschMult') && Math.random() > 0.5) { [a, b] = [b, a]; }
+    return { op1: a, op2: b, operator: '*', ergebnis: a * b };
+
+  } else if (multArt === 'schriftlich') {
+    const s1min = getNum('multFaktor1Min'), s1max = getNum('multFaktor1Max');
+    const s2min = getNum('multFaktor2Min'), s2max = getNum('multFaktor2Max');
+    const st1 = randInt(s1min, s1max), st2 = randInt(s2min, s2max);
+    const a = randInt(Math.pow(10, st1 - 1), Math.pow(10, st1) - 1);
+    const b = randInt(Math.pow(10, st2 - 1), Math.pow(10, st2) - 1);
+    return { op1: a, op2: b, operator: '*', ergebnis: a * b };
+
+  } else if (multArt === 'besondere') {
+    // Besondere Produkte: EmalZ und ZEmalZ
+    if (isChecked('cbEmalZ') && (!isChecked('cbZEmalZ') || Math.random() > 0.5)) {
+      const a = randInt(2, 9);
+      const b = randInt(1, 9) * 10;
+      return { op1: a, op2: b, operator: '*', ergebnis: a * b };
+    } else if (isChecked('cbZEmalZ')) {
+      const a = randInt(11, 99);
+      const b = randInt(1, 9) * 10;
+      return { op1: a, op2: b, operator: '*', ergebnis: a * b };
+    }
+    // Fallback
+    const a = randInt(2, 9);
+    const b = randInt(1, 9) * 10;
+    return { op1: a, op2: b, operator: '*', ergebnis: a * b };
+
+  } else if (multArt === 'intervall') {
+    const f1v = getNum('intFaktor1Von'), f1b = getNum('intFaktor1Bis');
+    const f2v = getNum('intFaktor2Von'), f2b = getNum('intFaktor2Bis');
+    const a = randInt(f1v, f1b), b = randInt(f2v, f2b);
+    return { op1: a, op2: b, operator: '*', ergebnis: a * b };
+  }
+  return null;
+}
+
+function genGeteiltAufgabe() {
+  const divArt = getRadio('divArt');
+  const rest = getRadio('divRest');
+  const minErg = getNum('minErgDiv');
+
+  if (divArt === 'einmaleins') {
+    const reihen = [];
+    document.querySelectorAll('.cbEinmaleinsDiv:checked').forEach(cb => reihen.push(parseInt(cb.value, 10)));
+    if (reihen.length === 0) return null;
+
+    // Divisor/Ergebnis-Bereiche
+    const kzkz = isChecked('cbDivkzkz');
+    const gzkz = isChecked('cbDivgzkz');
+    const gzgz = isChecked('cbDivgzgz');
+
+    let divisor, quotient;
+
+    // Schwere haeufiger
+    if (isChecked('cbDivSchwereHaeufiger') && Math.random() > 0.5) {
+      const schwer = reihen.filter(r => r >= 6);
+      if (schwer.length > 0) {
+        divisor = schwer[randInt(0, schwer.length - 1)];
+      } else {
+        divisor = reihen[randInt(0, reihen.length - 1)];
+      }
+    } else {
+      divisor = reihen[randInt(0, reihen.length - 1)];
+    }
+
+    // Ergebnis-Bereich basierend auf Checkboxen
+    if (gzgz && !kzkz && !gzkz) {
+      if (divisor < 10) divisor = randInt(10, 20);
+      quotient = randInt(Math.max(10, minErg), 20);
+    } else if (gzkz && !kzkz) {
+      if (divisor < 10) divisor = randInt(10, 20);
+      quotient = randInt(Math.max(1, minErg), 10);
+    } else {
+      quotient = randInt(Math.max(1, minErg), 10);
+    }
+
+    if (rest === 'ohne') {
+      const dividend = divisor * quotient;
+      if (isChecked('cbTauschDiv') && Math.random() > 0.5) {
+        return { op1: dividend, op2: quotient, operator: ':', ergebnis: divisor };
+      }
+      return { op1: dividend, op2: divisor, operator: ':', ergebnis: quotient };
+    } else if (rest === 'immer') {
+      const r = randInt(1, divisor - 1);
+      const dividend = divisor * quotient + r;
+      return { op1: dividend, op2: divisor, operator: ':', ergebnis: quotient, rest: r };
+    } else {
+      const r = randInt(0, divisor - 1);
+      const dividend = divisor * quotient + r;
+      return { op1: dividend, op2: divisor, operator: ':', ergebnis: quotient, rest: r > 0 ? r : undefined };
+    }
+  } else {
+    // schriftlich
+    const dMin = getNum('divDividendMin'), dMax = getNum('divDividendMax');
+    const sMin = getNum('divDivisorMin'), sMax = getNum('divDivisorMax');
+    const stD = randInt(dMin, dMax), stS = randInt(sMin, sMax);
+    const divisor = randInt(Math.pow(10, stS - 1), Math.pow(10, stS) - 1);
+    if (divisor === 0) return null;
+
+    if (rest === 'ohne') {
+      const qMin = Math.max(minErg, 2);
+      const qMax = Math.floor((Math.pow(10, stD) - 1) / divisor);
+      if (qMax < qMin) return null;
+      const quotient = randInt(qMin, Math.min(qMax, 999));
+      const dividend = divisor * quotient;
+      return { op1: dividend, op2: divisor, operator: ':', ergebnis: quotient };
+    } else {
+      const dividend = randInt(Math.pow(10, stD - 1), Math.pow(10, stD) - 1);
+      const quotient = Math.floor(dividend / divisor);
+      const r = dividend - divisor * quotient;
+      if (quotient < minErg) return null;
+      if (rest === 'immer' && r === 0) return null;
+      return { op1: dividend, op2: divisor, operator: ':', ergebnis: quotient, rest: r > 0 ? r : undefined };
+    }
+  }
+}
+
+// ===== FILTER =====
+function pruefeZehneruebergang(a, b, op) {
+  const mode = getRadio('zehneruebergang');
+  if (mode === 'egal') return true;
+
+  let erg = op === '+' ? a + b : a - b;
+  let hatUebergang = Math.floor(a / 10) !== Math.floor(erg / 10);
+
+  if (mode === 'ohne') return !hatUebergang;
+  if (mode === 'mit') return hatUebergang;
+  return true;
+}
+
+function pruefeHunderteruebergang(a, b, op) {
+  const mode = getRadio('hunderteruebergang');
+  if (mode === 'egal') return true;
+
+  let erg = op === '+' ? a + b : a - b;
+  let hatUebergang = Math.floor(a / 100) !== Math.floor(erg / 100);
+
+  if (mode === 'ohne') return !hatUebergang;
+  if (mode === 'mit') return hatUebergang;
+  return true;
+}
+
+function pruefeStellenwert(a, b, op) {
+  const mode = getRadio('rechenarten');
+  if (mode === 'alle') return true;
+
+  const aktiv = [];
+  document.querySelectorAll('.cbStellenwert:checked').forEach(cb => aktiv.push(cb.value));
+  if (aktiv.length === 0) return true;
+
+  const aAbs = Math.abs(a), bAbs = Math.abs(b);
+  const aStellen = String(aAbs).length;
+  const bStellen = String(bAbs).length;
+  const aIstZehner = aAbs >= 10 && aAbs % 10 === 0;
+  const bIstZehner = bAbs >= 10 && bAbs % 10 === 0;
+
+  for (const typ of aktiv) {
+    switch (typ) {
+      case 'EpE':
+        if (aStellen === 1 && bStellen === 1) return true;
+        break;
+      case 'ZpE':
+        if ((aIstZehner && bStellen === 1) || (bIstZehner && aStellen === 1)) return true;
+        break;
+      case 'ZEpE':
+        if ((aStellen === 2 && bStellen === 1) || (aStellen === 1 && bStellen === 2)) return true;
+        break;
+      case 'ZEpZ':
+        if ((aStellen === 2 && bIstZehner) || (bStellen === 2 && aIstZehner)) return true;
+        break;
+      case 'ZEpZE':
+        if (aStellen === 2 && bStellen === 2) return true;
+        break;
+      case 'HZEpHZE':
+        if (aStellen === 3 && bStellen === 3) return true;
+        break;
+    }
+  }
+  return false;
+}
+
+function generateTensNumber(min, max) {
+  const minZ = Math.ceil(min / 10) * 10;
+  const maxZ = Math.floor(max / 10) * 10;
+  if (maxZ < minZ) return minZ;
+  const count = (maxZ - minZ) / 10 + 1;
+  return minZ + Math.floor(Math.random() * count) * 10;
+}
+
+function isTrivialProblem(aufgabe) {
+  const a = aufgabe.op1, b = aufgabe.op2, op = aufgabe.operator;
+  switch (op) {
+    case '+': return a === 0 || b === 0 || (a === 1 && b === 1);
+    case '-': return a === b || b === 0;
+    case '*': return a === 0 || b === 0 || a === 1 || b === 1;
+    case ':': return b === 1 || a === 0;
+  }
+  return false;
+}
+
+function pruefeFilter(aufgabe) {
+  if (!aufgabe) return false;
+
+  if (isTrivialProblem(aufgabe)) return false;
+
+  if (isChecked('cbTrivial')) {
+    const min = getNum('trivialMin');
+    if (Math.abs(aufgabe.op1) < min && aufgabe.op1 !== 0) return false;
+    if (Math.abs(aufgabe.op2) < min && aufgabe.op2 !== 0) return false;
+    if (Math.abs(aufgabe.ergebnis) < min && aufgabe.ergebnis !== 0) return false;
+  }
+
+  if (isChecked('cbKeineZehnerpot')) {
+    if (istZehnerpotenz(aufgabe.op1) || istZehnerpotenz(aufgabe.op2)) return false;
+  }
+
+  if (isChecked('cbErgZehner')) {
+    if (aufgabe.operator === '+' || aufgabe.operator === '-') {
+      const zr = getZahlenraum();
+      if (zr >= 20 && aufgabe.ergebnis % 10 !== 0) return false;
+    }
+  }
+
+  if (isChecked('cbErgHunderter')) {
+    if (aufgabe.operator === '+' || aufgabe.operator === '-') {
+      const zr = getZahlenraum();
+      if (zr >= 100 && aufgabe.ergebnis % 100 !== 0) return false;
+    }
+  }
+
+  return true;
+}
+
+function istZehnerpotenz(n) {
+  n = Math.abs(n);
+  if (n === 0) return false;
+  if (n <= 9) return false;
+  while (n >= 10) {
+    if (n % 10 !== 0) return false;
+    n = Math.floor(n / 10);
+  }
+  return n >= 1 && n <= 9;
+}
+
+// ===== PLATZHALTER =====
+function wendePlatzhalterAn(aufgabe) {
+  if (!isChecked('cbPlatzhalter')) return aufgabe;
+
+  const stellen = [];
+  if (isChecked('cbPlatzhalterOp1')) stellen.push('op1');
+  if (isChecked('cbPlatzhalterOp2')) stellen.push('op2');
+  if (isChecked('cbPlatzhalterErg')) stellen.push('ergebnis');
+  if (stellen.length === 0) return aufgabe;
+
+  const isPM = aufgabe.operator === '+' || aufgabe.operator === '-';
+  const isMD = aufgabe.operator === '*' || aufgabe.operator === ':';
+
+  if (isPM && !isChecked('cbPlatzhalterPM')) return aufgabe;
+  if (isMD && !isChecked('cbPlatzhalterMD')) return aufgabe;
+
+  const stelle = stellen[randInt(0, stellen.length - 1)];
+  return { ...aufgabe, platzhalter: stelle };
+}
+
+// ===== RENDER =====
+function formatZahl(n, aufgabe, feld) {
+  const negativ = (aufgabe.operator === '+' || aufgabe.operator === '-') ? getRadio('negativePM') : getRadio('negativeMG');
+  const klammern = (aufgabe.operator === '+' || aufgabe.operator === '-') ? isChecked('cbKlammernPM') : isChecked('cbKlammernMG');
+
+  if (klammern && n > 0 && negativ !== 'ohne') return `(+${n})`;
+  if (n < 0) return `(${n})`;
+  return String(n);
+}
+
+function getNumPrefix(index) {
+  if (!isChecked('cbNummerierung')) return '';
+  const zaehlweise = getVal('numZaehlweise');
+  const zeichen = getVal('numZeichen');
+  let num;
+  if (zaehlweise === 'abc') {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    if (index < 26) num = alphabet[index];
+    else num = alphabet[Math.floor(index / 26) - 1] + alphabet[index % 26];
+  } else {
+    num = String(index + 1);
+  }
+  return `${num}${zeichen} `;
+}
+
+function renderAufgabeText(aufgabe, index, zeigeLoesungen, ohneGleich) {
+  const prefix = getNumPrefix(index);
+  const platzhalterArt = getRadio('platzhalterArt');
+
+  let op1Str = formatZahl(aufgabe.op1, aufgabe, 'op1');
+  let op2Str = formatZahl(aufgabe.op2, aufgabe, 'op2');
+  let ergStr = formatZahl(aufgabe.ergebnis, aufgabe, 'ergebnis');
+  let restStr = aufgabe.rest !== undefined ? ` R ${aufgabe.rest}` : '';
+
+  if (aufgabe.platzhalter) {
+    const ph = platzhalterArt === 'doppelt' ? '═══' : '___';
+    if (!zeigeLoesungen && isChecked('cbLoesungPlatzhalter')) {
+      const lMark = '«'; const rMark = '»';
+      if (aufgabe.platzhalter === 'op1') op1Str = lMark + aufgabe.op1 + rMark;
+      else if (aufgabe.platzhalter === 'op2') op2Str = lMark + aufgabe.op2 + rMark;
+      else if (aufgabe.platzhalter === 'ergebnis') { ergStr = lMark + aufgabe.ergebnis + rMark; restStr = aufgabe.rest !== undefined ? ` R ${aufgabe.rest}` : ''; }
+    } else if (!zeigeLoesungen) {
+      if (aufgabe.platzhalter === 'op1') op1Str = ph;
+      else if (aufgabe.platzhalter === 'op2') op2Str = ph;
+      else if (aufgabe.platzhalter === 'ergebnis') { ergStr = ph; restStr = ''; }
+    } else if (zeigeLoesungen) {
+      if (aufgabe.platzhalter === 'op1') op1Str = `[${aufgabe.op1}]`;
+      else if (aufgabe.platzhalter === 'op2') op2Str = `[${aufgabe.op2}]`;
+      else ergStr = `[${aufgabe.ergebnis}${restStr}]`;
+    }
+    if (ohneGleich) return `${prefix}${op1Str} ${aufgabe.operator} ${op2Str}`;
+    return `${prefix}${op1Str} ${aufgabe.operator} ${op2Str} = ${ergStr}${restStr}`;
+  } else {
+    if (ohneGleich) return `${prefix}${op1Str} ${aufgabe.operator} ${op2Str}`;
+    if (!zeigeLoesungen) {
+      return `${prefix}${op1Str} ${aufgabe.operator} ${op2Str} =`;
+    } else {
+      return `${prefix}${op1Str} ${aufgabe.operator} ${op2Str} = ${ergStr}${restStr}`;
+    }
+  }
+}
+
+function renderBlatt(zeigeLoesungen) {
+  const container = document.getElementById('renderOutput');
+  const zeilen = getNum('zeilen');
+  const spalten = getNum('spalten');
+  const spaltenAbstand = getNum('spaltenAbstand');
+  const zeilenAbstand = getNum('zeilenAbstand');
+  const fontFamily = getVal('fontAufgabe');
+  const fontSize = getNum('fontSizeAufgabe');
+  const fontSizeLoesung = getNum('fontSizeLoesung');
+  const ueberschrift = getVal('ueberschrift');
+  const arbeitsanweisung = getVal('arbeitsanweisung');
+  const schriftlich = isChecked('cbSchriftlich');
+  const gespenster = isChecked('cbGespenster');
+
+  const gespensterFrage = isChecked('cbGespensterFrage');
+  const rechenkaestchen = isChecked('cbRechenkaestchen');
+  const ohneGleich = isChecked('cbOhneGleich');
+  const trennlinien = isChecked('cbTrennlinien');
+  const ausrichtung = getRadio('ausrichtung');
+  const loesungUnter = isChecked('cbLoesungUnter');
+  const abstNummer = getNum('abstNummerAufgabe');
+
+  let html = '';
+
+  // Ueberschrift
+  if (ueberschrift) {
+    const uf = getVal('fontUeberschrift');
+    const us = getNum('fontSizeUeberschrift');
+    const bold = isChecked('cbUeberschriftFett') ? 'font-weight:bold;' : '';
+    html += `<div style="font-family:'${uf}';font-size:${us}pt;${bold}margin-bottom:6px;text-align:center;">${escHtml(ueberschrift)}</div>`;
+  }
+
+  // Namensfeld
+  if (isChecked('cbNamensfeld')) {
+    html += `<div style="margin-bottom:10px;font-size:12pt;">Name: _________________________ Datum: ______________</div>`;
+  }
+
+  // Arbeitsanweisung
+  if (arbeitsanweisung) {
+    const af = getVal('fontArbeitsanweisung');
+    const as = getNum('fontSizeArbeitsanweisung');
+    html += `<div style="font-family:'${af}';font-size:${as}pt;margin-bottom:10px;font-style:italic;">${escHtml(arbeitsanweisung)}</div>`;
+  }
+
+  // Aufgaben-Grid
+  const vertNum = isChecked('cbVertikalNum');
+
+  if (rechenkaestchen) {
+    html += renderSchriftlichKaestchen(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontFamily, fontSize, zeigeLoesungen, gespenster, gespensterFrage);
+  } else if (schriftlich) {
+    html += renderSchriftlich(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontFamily, fontSize, zeigeLoesungen, gespenster);
+  } else {
+    const trennStyle = trennlinien ? 'border-right:1px solid #ccc;padding-right:4px;' : '';
+    html += `<div style="display:grid;grid-template-columns:repeat(${spalten}, 1fr);column-gap:${spaltenAbstand}mm;row-gap:${zeilenAbstand}mm;font-family:'${fontFamily}';font-size:${fontSize}pt;">`;
+
+    for (let i = 0; i < aufgaben.length; i++) {
+      let idx;
+      if (vertNum) {
+        const col = Math.floor(i / zeilen);
+        const row = i % zeilen;
+        idx = row * spalten + col;
+      } else {
+        idx = i;
+      }
+
+      if (idx >= aufgaben.length) continue;
+      const a = aufgaben[idx];
+      let text = renderAufgabeText(a, idx, zeigeLoesungen, ohneGleich);
+
+      if (gespenster && !zeigeLoesungen) {
+        text = renderGespensteraufgabe(a, idx);
+      }
+
+      const col = i % spalten;
+      const cellTrenn = (trennlinien && col < spalten - 1) ? trennStyle : '';
+      let alignStyle = '';
+      if (ausrichtung === 'gleich' && !gespenster) {
+        const parts = text.split('=');
+        if (parts.length === 2) {
+          const left = parts[0];
+          const right = parts[1];
+          html += `<div class="aufgabe-cell" style="${cellTrenn}">`;
+          html += `<div style="display:flex;"><span style="flex:1;text-align:right;padding-right:${abstNummer}px;">${escHtml(left)}</span><span>=</span><span style="padding-left:4px;">${escHtml(right)}</span></div>`;
+          if (loesungUnter && !zeigeLoesungen) {
+            html += `<div style="color:#c00;font-size:${fontSizeLoesung}pt;">${a.ergebnis}${a.rest ? ' R' + a.rest : ''}</div>`;
+          }
+          html += `</div>`;
+          continue;
+        }
+      }
+
+      html += `<div class="aufgabe-cell" style="${cellTrenn}">`;
+      html += `<div>${escHtml(text)}</div>`;
+      if (loesungUnter && !zeigeLoesungen) {
+        html += `<div style="color:#c00;font-size:${fontSizeLoesung}pt;">${a.ergebnis}${a.rest ? ' R' + a.rest : ''}</div>`;
+      }
+      html += `</div>`;
+    }
+    html += '</div>';
+  }
+
+  // Loesungsspalte rechts (als echte Spalte neben dem Grid)
+  if (isChecked('cbLoesungSpalte') && !zeigeLoesungen) {
+    html = `<div style="display:flex;gap:20px;"><div style="flex:1;">${html}</div>`;
+    html += '<div style="border-left:1px solid #ccc;padding-left:12px;font-size:12pt;"><strong>Loesungen:</strong><ol style="margin-top:4px;padding-left:18px;">';
+    for (let i = 0; i < aufgaben.length; i++) {
+      const a = aufgaben[i];
+      html += `<li>${a.ergebnis}${a.rest ? ' R' + a.rest : ''}</li>`;
+    }
+    html += '</ol></div></div>';
+  }
+
+  // Loesungen durcheinander (Liste unten)
+  if (isChecked('cbLoesungDurcheinander') && !isChecked('cbLoesungSpalte') && !zeigeLoesungen) {
+    html += renderLoesungsSpalte();
+  }
+
+  // Loesungen am Seitenende (geordnet)
+  if (isChecked('cbLoesungFooter') && !zeigeLoesungen) {
+    html += '<div style="margin-top:16px;border-top:1px solid #ccc;padding-top:8px;font-size:11pt;">';
+    html += '<strong>Loesungen:</strong> ';
+    html += aufgaben.map((a, i) => `${i + 1}) ${a.ergebnis}${a.rest ? ' R' + a.rest : ''}`).join('&nbsp;&nbsp; ');
+    html += '</div>';
+  }
+
+  // Quersumme
+  if (isChecked('cbQuersumme') && !zeigeLoesungen) {
+    const sum = aufgaben.reduce((s, a) => s + a.ergebnis, 0);
+    html += `<div style="margin-top:12px;font-style:italic;">Quersumme: ${quersumme(sum)}</div>`;
+  }
+
+  // Separates Loesungsblatt als zweite Seite
+  if (isChecked('cbLoesungsblatt') && !zeigeLoesungen) {
+    document.getElementById('loesungsblattPage').style.display = 'block';
+    const loesungsContainer = document.getElementById('loesungsOutput');
+    container.innerHTML = html;
+    renderLoesungsblatt(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontFamily, fontSize, loesungsContainer);
+  } else {
+    document.getElementById('loesungsblattPage').style.display = 'none';
+    container.innerHTML = html;
+  }
+}
+
+function renderSchriftlich(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontFamily, fontSize, zeigeLoesungen, gespenster) {
+  let html = `<div style="display:grid;grid-template-columns:repeat(${spalten}, 1fr);column-gap:${spaltenAbstand}mm;row-gap:${zeilenAbstand + 10}mm;font-family:'${fontFamily}';font-size:${fontSize}pt;">`;
+
+  for (let i = 0; i < aufgaben.length; i++) {
+    const a = aufgaben[i];
+    const nummerierung = isChecked('cbNummerierung') ? `<span style="font-size:${fontSize - 2}pt">${getNumPrefix(i)}</span>` : '';
+    const op1Str = String(a.op1);
+    const op2Str = String(Math.abs(a.op2));
+    const ergStr = String(a.ergebnis);
+    const maxLen = Math.max(op1Str.length, op2Str.length + 2, ergStr.length);
+
+    html += `<div style="text-align:right;position:relative;">`;
+    html += `<div>${nummerierung}${op1Str.padStart(maxLen)}</div>`;
+    html += `<div style="border-bottom:2px solid black;">${a.operator} ${op2Str.padStart(maxLen - 2)}</div>`;
+    if (zeigeLoesungen) {
+      html += `<div>${ergStr.padStart(maxLen)}</div>`;
+    } else {
+      html += `<div style="min-height:1.5em;">&nbsp;</div>`;
+    }
+    html += `</div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderSchriftlichKaestchen(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontFamily, fontSize, zeigeLoesungen, gespenster, gespensterFrage) {
+  const boxSize = Math.max(20, fontSize * 1.6);
+  let html = `<div style="display:grid;grid-template-columns:repeat(${spalten}, 1fr);column-gap:${spaltenAbstand}mm;row-gap:${zeilenAbstand + 5}mm;font-family:'${fontFamily}';font-size:${fontSize}pt;">`;
+
+  for (let i = 0; i < aufgaben.length; i++) {
+    const a = aufgaben[i];
+    const num = isChecked('cbNummerierung') ? `<span style="font-size:${fontSize - 2}pt;margin-right:4px;font-weight:bold;">${getNumPrefix(i)}</span>` : '';
+    const op1Digits = String(Math.abs(a.op1)).split('');
+    const op2Digits = String(Math.abs(a.op2)).split('');
+    const ergDigits = String(Math.abs(a.ergebnis)).split('');
+    const maxDigits = Math.max(op1Digits.length, op2Digits.length, ergDigits.length);
+
+    let hide1, hide2, hideE;
+    if (gespenster && !zeigeLoesungen) {
+      const g = gespensterSpaltenweise(op1Digits, op2Digits, ergDigits, maxDigits);
+      hide1 = g.hide1; hide2 = g.hide2; hideE = g.hideE;
+    } else {
+      hide1 = []; hide2 = []; hideE = [];
+    }
+
+    const phPos = a.platzhalter;
+    const phLoesung = !zeigeLoesungen && isChecked('cbLoesungPlatzhalter');
+
+    html += `<div style="display:inline-block;">`;
+
+    // Op1 row with left-aligned number
+    html += `<div style="display:flex;align-items:center;">`;
+    html += `<span style="width:${boxSize + 20}px;text-align:left;">${num}</span>`;
+    if (phPos === 'op1' && !zeigeLoesungen && !phLoesung) {
+      for (let d = 0; d < maxDigits; d++) {
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #999;margin:1px;"></span>`;
+      }
+    } else {
+      const showColor = (phPos === 'op1' && phLoesung) ? 'color:#c00;' : '';
+      for (let d = 0; d < maxDigits - op1Digits.length; d++) {
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #ccc;margin:1px;"></span>`;
+      }
+      for (let d = 0; d < op1Digits.length; d++) {
+        const hidden = hide1.includes(d);
+        const ch = hidden ? (gespensterFrage ? '?' : '') : op1Digits[d];
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #333;margin:1px;text-align:center;line-height:${boxSize}px;${showColor}">${ch}</span>`;
+      }
+    }
+    html += `</div>`;
+
+    // Op2 row with operator
+    html += `<div style="display:flex;align-items:center;border-bottom:2px solid black;padding-bottom:2px;">`;
+    html += `<span style="width:${boxSize + 20}px;text-align:center;font-weight:bold;">${a.operator}</span>`;
+    if (phPos === 'op2' && !zeigeLoesungen && !phLoesung) {
+      for (let d = 0; d < maxDigits; d++) {
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #999;margin:1px;"></span>`;
+      }
+    } else {
+      const showColor = (phPos === 'op2' && phLoesung) ? 'color:#c00;' : '';
+      for (let d = 0; d < maxDigits - op2Digits.length; d++) {
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #ccc;margin:1px;"></span>`;
+      }
+      for (let d = 0; d < op2Digits.length; d++) {
+        const hidden = hide2.includes(d);
+        const ch = hidden ? (gespensterFrage ? '?' : '') : op2Digits[d];
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #333;margin:1px;text-align:center;line-height:${boxSize}px;${showColor}">${ch}</span>`;
+      }
+    }
+    html += `</div>`;
+
+    // Result row — bei Gespenster AUCH teilweise sichtbar
+    html += `<div style="display:flex;align-items:center;margin-top:2px;">`;
+    html += `<span style="width:${boxSize + 20}px;">&nbsp;</span>`;
+    if (zeigeLoesungen || (phPos === 'ergebnis' && phLoesung)) {
+      for (let d = 0; d < maxDigits - ergDigits.length; d++) {
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;margin:1px;"></span>`;
+      }
+      for (const digit of ergDigits) {
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #333;margin:1px;text-align:center;line-height:${boxSize}px;color:#c00;">${digit}</span>`;
+      }
+    } else if (gespenster) {
+      for (let d = 0; d < maxDigits - ergDigits.length; d++) {
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #999;margin:1px;"></span>`;
+      }
+      for (let d = 0; d < ergDigits.length; d++) {
+        const hidden = hideE.includes(d);
+        const ch = hidden ? (gespensterFrage ? '?' : '') : ergDigits[d];
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #333;margin:1px;text-align:center;line-height:${boxSize}px;">${ch}</span>`;
+      }
+    } else {
+      for (let d = 0; d < maxDigits; d++) {
+        html += `<span style="display:inline-block;width:${boxSize}px;height:${boxSize}px;border:1px solid #999;margin:1px;"></span>`;
+      }
+    }
+    html += `</div>`;
+    html += `</div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function gespensterSpaltenweise(op1Digits, op2Digits, ergDigits, maxDigits) {
+  const hide1 = [], hide2 = [], hideE = [];
+  for (let col = 0; col < maxDigits; col++) {
+    const i1 = col - (maxDigits - op1Digits.length);
+    const i2 = col - (maxDigits - op2Digits.length);
+    const iE = col - (maxDigits - ergDigits.length);
+
+    const kandidaten = [];
+    if (i1 >= 0) kandidaten.push('op1');
+    if (i2 >= 0) kandidaten.push('op2');
+    if (iE >= 0) kandidaten.push('erg');
+
+    if (kandidaten.length === 0) continue;
+    if (Math.random() < 0.7) {
+      const wahl = kandidaten[Math.floor(Math.random() * kandidaten.length)];
+      if (wahl === 'op1') hide1.push(i1);
+      else if (wahl === 'op2') hide2.push(i2);
+      else hideE.push(iE);
+    }
+  }
+  return { hide1, hide2, hideE };
+}
+
+function renderGespensteraufgabe(aufgabe, index) {
+  const nummerierung = getNumPrefix(index);
+  const digits1 = String(Math.abs(aufgabe.op1)).split('');
+  const digits2 = String(Math.abs(aufgabe.op2)).split('');
+  const digitsE = String(Math.abs(aufgabe.ergebnis)).split('');
+  const maxDigits = Math.max(digits1.length, digits2.length, digitsE.length);
+
+  const g = gespensterSpaltenweise(digits1, digits2, digitsE, maxDigits);
+
+  const str1 = digits1.map((d, i) => g.hide1.includes(i) ? '_' : d).join('');
+  const str2 = digits2.map((d, i) => g.hide2.includes(i) ? '_' : d).join('');
+  const strE = digitsE.map((d, i) => g.hideE.includes(i) ? '_' : d).join('');
+
+  return `${nummerierung}${str1} ${aufgabe.operator} ${str2} = ${strE}`;
+}
+
+function renderLoesungsSpalte() {
+  let html = '<div style="margin-top:12px;border-top:1px solid #ccc;padding-top:8px;">';
+  html += '<strong>Loesungen (durcheinander):</strong> ';
+  const l = aufgaben.map(a => a.ergebnis + (a.rest ? ` R${a.rest}` : ''));
+  if (isChecked('cbLoesungDurcheinander')) {
+    shuffle(l);
+  }
+  html += l.join(', ');
+  html += '</div>';
+  return html;
+}
+
+function quersumme(n) {
+  return String(Math.abs(n)).split('').reduce((s, d) => s + Number(d), 0);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randInt(0, i);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderLoesungsblatt(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontFamily, fontSize, container) {
+  const rechenkaestchen = isChecked('cbRechenkaestchen');
+  const schriftlich = isChecked('cbSchriftlich');
+
+  const gespensterFrage = isChecked('cbGespensterFrage');
+  let html = '<div style="font-weight:bold;font-size:16pt;text-align:center;margin-bottom:12px;">Loesungsblatt</div>';
+  if (rechenkaestchen) {
+    html += renderSchriftlichKaestchen(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontFamily, fontSize, true, false, gespensterFrage);
+  } else if (schriftlich) {
+    html += renderSchriftlich(zeilen, spalten, spaltenAbstand, zeilenAbstand, fontFamily, fontSize, true, false);
+  } else {
+    const trennlinien = isChecked('cbTrennlinien');
+    const trennStyle = trennlinien ? 'border-right:1px solid #ccc;padding-right:4px;' : '';
+    const ohneGleich = isChecked('cbOhneGleich');
+    html += `<div style="display:grid;grid-template-columns:repeat(${spalten}, 1fr);column-gap:${spaltenAbstand}mm;row-gap:${zeilenAbstand}mm;font-family:'${fontFamily}';font-size:${fontSize}pt;">`;
+    for (let i = 0; i < aufgaben.length; i++) {
+      const a = aufgaben[i];
+      const text = renderAufgabeText(a, i, true, ohneGleich);
+      const cellTrenn = (trennlinien && (i + 1) % spalten !== 0) ? trennStyle : '';
+      html += `<div class="aufgabe-cell" style="${cellTrenn}">${escHtml(text)}</div>`;
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+// ===== MAIN ACTIONS =====
+function berechneSeiteVoll() {
+  const fontSize = getNum('fontSizeAufgabe');
+  const zeilenAbstand = getNum('zeilenAbstand');
+  const schriftlich = isChecked('cbSchriftlich') || isChecked('cbRechenkaestchen');
+  const fontMM = fontSize * 0.35;
+  const zeilenHoehe = schriftlich ? (fontMM * 4 + zeilenAbstand + 5) : (fontMM + zeilenAbstand + 2);
+  const seitenHoehe = 257;
+  const zeilen = Math.max(1, Math.floor(seitenHoehe / zeilenHoehe));
+  const spaltenBreite = schriftlich ? 55 : 50;
+  const seitenBreite = 180;
+  const spalten = Math.max(1, Math.min(6, Math.floor(seitenBreite / spaltenBreite)));
+  return { zeilen, spalten };
+}
+
+function neueAufgaben() {
+  let zeilen, spalten;
+  if (isChecked('cbSeiteFuellen')) {
+    const calc = berechneSeiteVoll();
+    zeilen = calc.zeilen;
+    spalten = calc.spalten;
+  } else {
+    zeilen = getNum('zeilen');
+    spalten = getNum('spalten');
+  }
+  const anzahl = zeilen * spalten;
+
+  aufgaben = [];
+  const seen = new Set();
+
+  for (let i = 0; i < anzahl; i++) {
+    let a = null;
+    let versuche = 500;
+    while (versuche-- > 0) {
+      a = generiereAufgabe();
+      if (!a) break;
+      const key = `${a.op1}${a.operator}${a.op2}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        break;
+      }
+      a = null;
+    }
+    if (a) {
+      a = wendePlatzhalterAn(a);
+      aufgaben.push(a);
+    }
+  }
+
+  if (aufgaben.length < anzahl) {
+    const msg = `Nur ${aufgaben.length} von ${anzahl} Aufgaben konnten mit diesen Einschraenkungen generiert werden.`;
+    const warn = document.getElementById('generierWarnung');
+    if (warn) { warn.textContent = msg; warn.style.display = 'block'; }
+    else {
+      const el = document.createElement('div');
+      el.id = 'generierWarnung';
+      el.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;padding:8px 12px;margin:8px 0;border-radius:4px;color:#856404;';
+      el.textContent = msg;
+      document.getElementById('renderOutput').parentNode.insertBefore(el, document.getElementById('renderOutput'));
+    }
+  } else {
+    const warn = document.getElementById('generierWarnung');
+    if (warn) warn.style.display = 'none';
+  }
+
+  renderBlatt(false);
+  updateAufgabenGesamt();
+}
+
+function aufgabenMischen() {
+  shuffle(aufgaben);
+  renderBlatt(false);
+}
+
+function drucken() {
+  renderBlatt(false);
+  window.print();
+}
+
+async function inZwischenablage() {
+  const page = document.getElementById('previewPage');
+  try {
+    const canvas = await html2canvas(page);
+    canvas.toBlob(blob => {
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      alert('In Zwischenablage kopiert!');
+    });
+  } catch (e) {
+    // Fallback: select content
+    const range = document.createRange();
+    range.selectNodeContents(page);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('copy');
+    sel.removeAllRanges();
+    alert('Text in Zwischenablage kopiert (fuer Bild-Export wird html2canvas benoetigt).');
+  }
+}
+
+function speichern() {
+  const einstellungen = sammelEinstellungen();
+  const blob = new Blob([JSON.stringify(einstellungen, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rechenblatt.rbl';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function laden() {
+  document.getElementById('fileInput').click();
+}
+
+function dateiLaden(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const einst = JSON.parse(e.target.result);
+      wendeEinstellungenAn(einst);
+      neueAufgaben();
+    } catch (err) {
+      alert('Fehler beim Laden: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function sammelEinstellungen() {
+  return {
+    version: '3.0-web',
+    cbPlus: isChecked('cbPlus'),
+    cbMinus: isChecked('cbMinus'),
+    cbMal: isChecked('cbMal'),
+    cbGeteilt: isChecked('cbGeteilt'),
+    zahlenraum: getRadio('zahlenraum'),
+    zahlenraumBis: getNum('zahlenraumBis'),
+    zehneruebergang: getRadio('zehneruebergang'),
+    hunderteruebergang: getRadio('hunderteruebergang'),
+    cbErgZehner: isChecked('cbErgZehner'),
+    cbErgHunderter: isChecked('cbErgHunderter'),
+    negativePM: getRadio('negativePM'),
+    cbKlammernPM: isChecked('cbKlammernPM'),
+    multArt: getRadio('multArt'),
+    einmaleins: [...document.querySelectorAll('.cbEinmaleins:checked')].map(cb => parseInt(cb.value, 10)),
+    cbTauschMult: isChecked('cbTauschMult'),
+    cbQuadrat: isChecked('cbQuadrat'),
+    quadratBis: getNum('quadratBis'),
+    multFaktor1Min: getNum('multFaktor1Min'),
+    multFaktor1Max: getNum('multFaktor1Max'),
+    multFaktor2Min: getNum('multFaktor2Min'),
+    multFaktor2Max: getNum('multFaktor2Max'),
+    intFaktor1Von: getNum('intFaktor1Von'),
+    intFaktor1Bis: getNum('intFaktor1Bis'),
+    intFaktor2Von: getNum('intFaktor2Von'),
+    intFaktor2Bis: getNum('intFaktor2Bis'),
+    divArt: getRadio('divArt'),
+    einmaleinsDiv: [...document.querySelectorAll('.cbEinmaleinsDiv:checked')].map(cb => parseInt(cb.value, 10)),
+    cbTauschDiv: isChecked('cbTauschDiv'),
+    divRest: getRadio('divRest'),
+    divDividendMin: getNum('divDividendMin'),
+    divDividendMax: getNum('divDividendMax'),
+    divDivisorMin: getNum('divDivisorMin'),
+    divDivisorMax: getNum('divDivisorMax'),
+    minErgDiv: getNum('minErgDiv'),
+    negativeMG: getRadio('negativeMG'),
+    cbKlammernMG: isChecked('cbKlammernMG'),
+    cbTrivial: isChecked('cbTrivial'),
+    trivialMin: getNum('trivialMin'),
+    cbKeineZehnerpot: isChecked('cbKeineZehnerpot'),
+    rechenarten: getRadio('rechenarten'),
+    stellenwert: [...document.querySelectorAll('.cbStellenwert:checked')].map(cb => cb.value),
+    zeilen: getNum('zeilen'),
+    spalten: getNum('spalten'),
+    cbSeiteFuellen: isChecked('cbSeiteFuellen'),
+    spaltenAbstand: getNum('spaltenAbstand'),
+    zeilenAbstand: getNum('zeilenAbstand'),
+    cbSchriftlich: isChecked('cbSchriftlich'),
+    cbGespenster: isChecked('cbGespenster'),
+    cbGespensterFrage: isChecked('cbGespensterFrage'),
+    cbTrennlinien: isChecked('cbTrennlinien'),
+    cbNummerierung: isChecked('cbNummerierung'),
+    cbVertikalNum: isChecked('cbVertikalNum'),
+    numZaehlweise: getVal('numZaehlweise'),
+    numZeichen: getVal('numZeichen'),
+    abstNummerAufgabe: getNum('abstNummerAufgabe'),
+    ausrichtung: getRadio('ausrichtung'),
+    fontAufgabe: getVal('fontAufgabe'),
+    fontSizeAufgabe: getNum('fontSizeAufgabe'),
+    fontLoesung: getVal('fontLoesung'),
+    fontSizeLoesung: getNum('fontSizeLoesung'),
+    cbPlatzhalter: isChecked('cbPlatzhalter'),
+    cbPlatzhalterOp1: isChecked('cbPlatzhalterOp1'),
+    cbPlatzhalterOp2: isChecked('cbPlatzhalterOp2'),
+    cbPlatzhalterErg: isChecked('cbPlatzhalterErg'),
+    cbPlatzhalterPM: isChecked('cbPlatzhalterPM'),
+    cbPlatzhalterMD: isChecked('cbPlatzhalterMD'),
+    platzhalterArt: getRadio('platzhalterArt'),
+    cbLoesungSpalte: isChecked('cbLoesungSpalte'),
+    cbLoesungPlatzhalter: isChecked('cbLoesungPlatzhalter'),
+    cbLoesungUnter: isChecked('cbLoesungUnter'),
+    cbLoesungDurcheinander: isChecked('cbLoesungDurcheinander'),
+    cbLoesungFooter: isChecked('cbLoesungFooter'),
+    cbQuersumme: isChecked('cbQuersumme'),
+    cbLoesungsblatt: isChecked('cbLoesungsblatt'),
+    ueberschrift: getVal('ueberschrift'),
+    fontUeberschrift: getVal('fontUeberschrift'),
+    fontSizeUeberschrift: getNum('fontSizeUeberschrift'),
+    cbUeberschriftFett: isChecked('cbUeberschriftFett'),
+    arbeitsanweisung: getVal('arbeitsanweisung'),
+    fontArbeitsanweisung: getVal('fontArbeitsanweisung'),
+    fontSizeArbeitsanweisung: getNum('fontSizeArbeitsanweisung'),
+    cbNamensfeld: isChecked('cbNamensfeld'),
+  };
+}
+
+function wendeEinstellungenAn(e) {
+  function setCheck(id, val) { const el = document.getElementById(id); if (el) el.checked = !!val; }
+  function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+  function setRadio(name, val) { const r = document.querySelector(`input[name="${name}"][value="${val}"]`); if (r) r.checked = true; }
+
+  setCheck('cbPlus', e.cbPlus);
+  setCheck('cbMinus', e.cbMinus);
+  setCheck('cbMal', e.cbMal);
+  setCheck('cbGeteilt', e.cbGeteilt);
+  setRadio('zahlenraum', e.zahlenraum);
+  setVal('zahlenraumBis', e.zahlenraumBis);
+  setRadio('zehneruebergang', e.zehneruebergang);
+  setRadio('hunderteruebergang', e.hunderteruebergang);
+  setCheck('cbErgZehner', e.cbErgZehner);
+  setCheck('cbErgHunderter', e.cbErgHunderter);
+  setRadio('negativePM', e.negativePM);
+  setCheck('cbKlammernPM', e.cbKlammernPM);
+  setRadio('multArt', e.multArt);
+  document.querySelectorAll('.cbEinmaleins').forEach(cb => cb.checked = (e.einmaleins || []).includes(parseInt(cb.value, 10)));
+  setCheck('cbTauschMult', e.cbTauschMult);
+  setCheck('cbQuadrat', e.cbQuadrat);
+  setVal('quadratBis', e.quadratBis);
+  setVal('multFaktor1Min', e.multFaktor1Min);
+  setVal('multFaktor1Max', e.multFaktor1Max);
+  setVal('multFaktor2Min', e.multFaktor2Min);
+  setVal('multFaktor2Max', e.multFaktor2Max);
+  setVal('intFaktor1Von', e.intFaktor1Von);
+  setVal('intFaktor1Bis', e.intFaktor1Bis);
+  setVal('intFaktor2Von', e.intFaktor2Von);
+  setVal('intFaktor2Bis', e.intFaktor2Bis);
+  setRadio('divArt', e.divArt);
+  document.querySelectorAll('.cbEinmaleinsDiv').forEach(cb => cb.checked = (e.einmaleinsDiv || []).includes(parseInt(cb.value, 10)));
+  setCheck('cbTauschDiv', e.cbTauschDiv);
+  setRadio('divRest', e.divRest);
+  setVal('divDividendMin', e.divDividendMin);
+  setVal('divDividendMax', e.divDividendMax);
+  setVal('divDivisorMin', e.divDivisorMin);
+  setVal('divDivisorMax', e.divDivisorMax);
+  setVal('minErgDiv', e.minErgDiv);
+  setRadio('negativeMG', e.negativeMG);
+  setCheck('cbKlammernMG', e.cbKlammernMG);
+  setCheck('cbTrivial', e.cbTrivial);
+  setVal('trivialMin', e.trivialMin);
+  setCheck('cbKeineZehnerpot', e.cbKeineZehnerpot);
+  if (e.rechenarten) setRadio('rechenarten', e.rechenarten);
+  if (e.stellenwert) {
+    document.querySelectorAll('.cbStellenwert').forEach(cb => cb.checked = (e.stellenwert || []).includes(cb.value));
+  }
+  setVal('zeilen', e.zeilen);
+  setVal('spalten', e.spalten);
+  if (e.cbSeiteFuellen !== undefined) setCheck('cbSeiteFuellen', e.cbSeiteFuellen);
+  setVal('spaltenAbstand', e.spaltenAbstand);
+  setVal('zeilenAbstand', e.zeilenAbstand);
+  setCheck('cbSchriftlich', e.cbSchriftlich);
+  setCheck('cbGespenster', e.cbGespenster);
+  if (e.cbGespensterFrage !== undefined) setCheck('cbGespensterFrage', e.cbGespensterFrage);
+  setCheck('cbTrennlinien', e.cbTrennlinien);
+  setCheck('cbNummerierung', e.cbNummerierung);
+  setCheck('cbVertikalNum', e.cbVertikalNum);
+  if (e.numZaehlweise) setVal('numZaehlweise', e.numZaehlweise);
+  if (e.numZeichen !== undefined) setVal('numZeichen', e.numZeichen);
+  setVal('abstNummerAufgabe', e.abstNummerAufgabe);
+  setRadio('ausrichtung', e.ausrichtung);
+  setVal('fontAufgabe', e.fontAufgabe);
+  setVal('fontSizeAufgabe', e.fontSizeAufgabe);
+  setVal('fontLoesung', e.fontLoesung);
+  setVal('fontSizeLoesung', e.fontSizeLoesung);
+  setCheck('cbPlatzhalter', e.cbPlatzhalter);
+  setCheck('cbPlatzhalterOp1', e.cbPlatzhalterOp1);
+  setCheck('cbPlatzhalterOp2', e.cbPlatzhalterOp2);
+  setCheck('cbPlatzhalterErg', e.cbPlatzhalterErg);
+  setCheck('cbPlatzhalterPM', e.cbPlatzhalterPM);
+  setCheck('cbPlatzhalterMD', e.cbPlatzhalterMD);
+  setRadio('platzhalterArt', e.platzhalterArt);
+  setCheck('cbLoesungSpalte', e.cbLoesungSpalte);
+  setCheck('cbLoesungPlatzhalter', e.cbLoesungPlatzhalter);
+  setCheck('cbLoesungUnter', e.cbLoesungUnter);
+  setCheck('cbLoesungDurcheinander', e.cbLoesungDurcheinander);
+  setCheck('cbLoesungFooter', e.cbLoesungFooter);
+  setCheck('cbQuersumme', e.cbQuersumme);
+  setCheck('cbLoesungsblatt', e.cbLoesungsblatt);
+  setVal('ueberschrift', e.ueberschrift);
+  setVal('fontUeberschrift', e.fontUeberschrift);
+  setVal('fontSizeUeberschrift', e.fontSizeUeberschrift);
+  setCheck('cbUeberschriftFett', e.cbUeberschriftFett);
+  setVal('arbeitsanweisung', e.arbeitsanweisung);
+  setVal('fontArbeitsanweisung', e.fontArbeitsanweisung);
+  setVal('fontSizeArbeitsanweisung', e.fontSizeArbeitsanweisung);
+  setCheck('cbNamensfeld', e.cbNamensfeld);
+
+  updateVisibility();
+}
+
+// ===== UI =====
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.getAttribute('onclick') && t.getAttribute('onclick').includes(name)) t.classList.add('active');
+  });
+}
+
+function updateAufgabenGesamt() {
+  const g = getNum('zeilen') * getNum('spalten');
+  document.getElementById('aufgabenGesamt').textContent = g;
+}
+
+function updateVisibility() {
+  const multArt = getRadio('multArt');
+  document.getElementById('fsEinmaleins').classList.toggle('hidden', multArt !== 'einmaleins');
+  document.getElementById('fsMultSchriftlich').classList.toggle('hidden', multArt !== 'schriftlich');
+  document.getElementById('fsMultIntervall').classList.toggle('hidden', multArt !== 'intervall');
+  document.getElementById('fsBesondereProdukte').classList.toggle('hidden', multArt !== 'besondere');
+
+  const divArt = getRadio('divArt');
+  document.getElementById('fsDivSchriftlich').classList.toggle('hidden', divArt !== 'schriftlich');
+
+  const rechenarten = getRadio('rechenarten');
+  const stellenwertEl = document.getElementById('stellenwertOptionen');
+  if (stellenwertEl) stellenwertEl.classList.toggle('hidden', rechenarten !== 'nurfolgende');
+}
+
+// Event Listeners
+document.querySelectorAll('input[name="multArt"]').forEach(r => r.addEventListener('change', updateVisibility));
+document.querySelectorAll('input[name="divArt"]').forEach(r => r.addEventListener('change', updateVisibility));
+document.querySelectorAll('input[name="rechenarten"]').forEach(r => r.addEventListener('change', updateVisibility));
+document.getElementById('zeilen').addEventListener('change', updateAufgabenGesamt);
+document.getElementById('spalten').addEventListener('change', updateAufgabenGesamt);
+document.getElementById('cbSeiteFuellen').addEventListener('change', () => { neueAufgaben(); });
+
+function reRender() { if (aufgaben.length > 0) renderBlatt(false); }
+
+document.querySelectorAll('#tab-aufgabenart input, #tab-aufgabenart select').forEach(el => {
+  el.addEventListener('change', () => { neueAufgaben(); });
+  if (el.type === 'number' || el.type === 'text') el.addEventListener('input', () => { neueAufgaben(); });
+});
+document.querySelectorAll('#tab-layout input, #tab-layout select').forEach(el => {
+  el.addEventListener('change', reRender);
+  if (el.type === 'number' || el.type === 'text') el.addEventListener('input', reRender);
+});
+document.querySelectorAll('#tab-platzhalter input').forEach(el => {
+  el.addEventListener('change', () => { neueAufgaben(); });
+});
+document.querySelectorAll('#tab-ueberschrift input, #tab-ueberschrift select').forEach(el => {
+  el.addEventListener('change', reRender);
+  if (el.type === 'text' || el.type === 'number') el.addEventListener('input', reRender);
+});
+document.querySelectorAll('#tab-loesungen input').forEach(el => {
+  el.addEventListener('change', reRender);
+});
+document.getElementById('cbLoesungPlatzhalter').addEventListener('change', function() {
+  if (this.checked) {
+    if (!isChecked('cbPlatzhalter')) document.getElementById('cbPlatzhalter').checked = true;
+    if (!isChecked('cbPlatzhalterMD')) document.getElementById('cbPlatzhalterMD').checked = true;
+    neueAufgaben();
+  } else {
+    reRender();
+  }
+});
+
+// Standardeinstellungen
+function standardSpeichern() {
+  const einstellungen = sammelEinstellungen();
+  localStorage.setItem('rechenblatt-standard', JSON.stringify(einstellungen));
+  alert('Standardeinstellungen gespeichert.');
+}
+
+function standardLaden() {
+  const data = localStorage.getItem('rechenblatt-standard');
+  if (data) {
+    try {
+      wendeEinstellungenAn(JSON.parse(data));
+      updateVisibility();
+      updateAufgabenGesamt();
+    } catch (e) {}
+  }
+}
+
+// Initial — gespeicherte Standards laden
+standardLaden();
+neueAufgaben();
+</script>
+</body>
+</html>
