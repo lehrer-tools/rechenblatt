@@ -48,6 +48,14 @@ button.secondary:hover { background: #444; }
 /* Trennlinien */
 .col-trennlinie { border-right: 1px solid #ccc; padding-right: 8px; }
 
+/* Mobile */
+@media (max-width: 768px) {
+  .app { flex-direction: column; height: auto; }
+  .sidebar { width: 100%; min-width: unset; max-width: unset; border-right: none; border-bottom: 1px solid #ccc; max-height: none; }
+  .preview-area { padding: 10px; }
+  .preview-page { width: 100%; min-height: auto; padding: 5mm; }
+}
+
 /* Print */
 @page { margin: 0; size: A4; }
 @media print {
