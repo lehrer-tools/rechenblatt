@@ -116,7 +116,7 @@ button.secondary:hover { background: #444; }
           <label><input type="radio" name="zehneruebergang" value="egal" checked> egal</label>
           <label><input type="radio" name="zehneruebergang" value="ohne"> ohne Zehnerübergang</label>
           <label><input type="radio" name="zehneruebergang" value="mit"> mit Zehnerübergang</label>
-          <label><input type="checkbox" id="cbErgZehner"> Ergebnis auf nächsten Zehner (aufrunden)</label>
+          <label><input type="checkbox" id="cbErgZehner"> Ergebnis auf nächsten Zehner (Ergebnis ist glatter Zehner)</label>
         </fieldset>
 
         <fieldset style="margin-top:6px">
@@ -124,7 +124,7 @@ button.secondary:hover { background: #444; }
           <label><input type="radio" name="hunderteruebergang" value="egal" checked> egal</label>
           <label><input type="radio" name="hunderteruebergang" value="ohne"> ohne Hunderterübergang</label>
           <label><input type="radio" name="hunderteruebergang" value="mit"> mit Hunderterübergang</label>
-          <label><input type="checkbox" id="cbErgHunderter"> Ergebnis auf nächsten Hunderter (aufrunden)</label>
+          <label><input type="checkbox" id="cbErgHunderter"> Ergebnis auf nächsten Hunderter (Ergebnis ist glatter Hunderter)</label>
         </fieldset>
 
         <fieldset style="margin-top:6px">
@@ -587,9 +587,22 @@ function genPlusAufgabe() {
   let a, b, erg;
   const minVal = nullErlaubt ? 0 : 1;
 
+  const rundZehner = isChecked('cbErgZehner') && zr >= 20;
+  const rundHunderter = isChecked('cbErgHunderter') && zr >= 100;
+
   const subtypeRange = getStellenwertRange(zr);
 
-  if (subtypeRange) {
+  if (rundZehner || rundHunderter) {
+    const schritt = rundHunderter ? 100 : 10;
+    const maxErg = Math.floor(zr / schritt) * schritt;
+    const minErg = negativ === 'ohne' ? schritt : -maxErg;
+    erg = (randInt(minErg / schritt, maxErg / schritt)) * schritt;
+    if (erg === 0 && !nullErlaubt) erg = schritt;
+    a = randInt(minVal, Math.abs(erg) > 0 ? Math.abs(erg) - 1 : zr);
+    b = erg - a;
+    if (!nullErlaubt && (a === 0 || b === 0)) return null;
+    if (negativ === 'ohne' && (a < 0 || b < 0)) return null;
+  } else if (subtypeRange) {
     a = subtypeRange.genA();
     b = subtypeRange.genB();
     erg = a + b;
@@ -623,9 +636,27 @@ function genMinusAufgabe() {
   let a, b, erg;
   const minVal = nullErlaubt ? 0 : 1;
 
+  const rundZehner = isChecked('cbErgZehner') && zr >= 20;
+  const rundHunderter = isChecked('cbErgHunderter') && zr >= 100;
+
   const subtypeRange = getStellenwertRange(zr);
 
-  if (subtypeRange) {
+  if (rundZehner || rundHunderter) {
+    const schritt = rundHunderter ? 100 : 10;
+    const maxErg = Math.floor(zr / schritt) * schritt;
+    if (negativ === 'ohne') {
+      erg = randInt(1, maxErg / schritt) * schritt;
+      a = randInt(erg + 1, zr);
+      b = a - erg;
+    } else {
+      erg = (randInt(-maxErg / schritt, maxErg / schritt)) * schritt;
+      if (erg === 0 && !nullErlaubt) erg = schritt;
+      a = randInt(minVal, zr);
+      b = a - erg;
+    }
+    if (!nullErlaubt && (a === 0 || b === 0)) return null;
+    if (Math.abs(b) > zr) return null;
+  } else if (subtypeRange) {
     a = subtypeRange.genA();
     b = subtypeRange.genB();
     if (b > a) [a, b] = [b, a];
@@ -1429,7 +1460,7 @@ function neueAufgaben() {
   }
 
   if (aufgaben.length < anzahl) {
-    const msg = `Nur ${aufgaben.length} von ${anzahl} Aufgaben konnten mit diesen Einschraenkungen generiert werden.`;
+    const msg = `Nur ${aufgaben.length} von ${anzahl} Aufgaben konnten mit diesen Einschränkungen generiert werden.`;
     const warn = document.getElementById('generierWarnung');
     if (warn) { warn.textContent = msg; warn.style.display = 'block'; }
     else {
