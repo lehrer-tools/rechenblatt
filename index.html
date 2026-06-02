@@ -40,7 +40,7 @@ button.secondary:hover { background: #444; }
 /* Task display */
 .aufgabe { font-family: 'Courier New', monospace; white-space: pre; }
 .aufgabe-grid { display: grid; gap: 0; }
-.aufgabe-cell { padding: 2px 8px; }
+.aufgabe-cell { padding: 2px 8px; white-space: nowrap; }
 
 /* Rechenkästchen */
 .rechenkaestchen { display: inline-block; border: 1px solid #333; width: 1.8em; height: 1.8em; text-align: center; line-height: 1.8em; margin: 1px; font-family: inherit; }
@@ -1427,9 +1427,25 @@ function berechneSeiteVoll() {
   const zeilenHoehe = schriftlich ? (fontMM * 4 + zeilenAbstand + 5) : (fontMM + zeilenAbstand + 2);
   const seitenHoehe = 257;
   const zeilen = Math.max(1, Math.floor(seitenHoehe / zeilenHoehe));
-  const spaltenBreite = schriftlich ? 55 : 50;
+
+  // Spaltenbreite abhaengig von max. Stellenanzahl im aktuellen Zahlenraum
+  const zr = getZahlenraum();
+  const stellen = String(zr).length;
+  // Format: "12) 99999 + 99999 = " ~ 2*stellen + 9 Zeichen (Nummer/Operator/Gleichheits)
+  const zeichen = schriftlich ? (stellen + 4) : (2 * stellen + 9);
+  // Courier monospace: ~0.5em pro Zeichen real
+  const charBreiteMM = fontMM * 0.5;
+  const spaltenAbstand = getNum('spaltenAbstand') || 15;
+  const minSpaltenBreite = Math.max(30, zeichen * charBreiteMM + 6);
   const seitenBreite = 180;
-  const spalten = Math.max(1, Math.min(6, Math.floor(seitenBreite / spaltenBreite)));
+  // Berechne mit Beruecksichtigung der gaps zwischen Spalten
+  let maxSpalten = 1;
+  for (let s = 1; s <= 6; s++) {
+    const gesamtBreite = s * minSpaltenBreite + (s - 1) * spaltenAbstand;
+    if (gesamtBreite <= seitenBreite) maxSpalten = s;
+    else break;
+  }
+  const spalten = Math.max(1, Math.min(6, maxSpalten));
   return { zeilen, spalten };
 }
 
@@ -1439,6 +1455,9 @@ function neueAufgaben() {
     const calc = berechneSeiteVoll();
     zeilen = calc.zeilen;
     spalten = calc.spalten;
+    // Berechnete Werte ins Form schreiben, damit renderBlatt sie sieht
+    document.getElementById('zeilen').value = zeilen;
+    document.getElementById('spalten').value = spalten;
   } else {
     zeilen = getNum('zeilen');
     spalten = getNum('spalten');
