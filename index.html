@@ -1429,10 +1429,15 @@ function berechneSeiteVoll() {
   const zeilen = Math.max(1, Math.floor(seitenHoehe / zeilenHoehe));
 
   // Spaltenbreite abhaengig von max. Stellenanzahl im aktuellen Zahlenraum
+  // Beruecksichtigt auch Loesungsblatt (Aufgabe + Ergebnis)
   const zr = getZahlenraum();
   const stellen = String(zr).length;
-  // Format: "12) 99999 + 99999 = " ~ 2*stellen + 9 Zeichen (Nummer/Operator/Gleichheits)
-  const zeichen = schriftlich ? (stellen + 4) : (2 * stellen + 9);
+  const mitLoesung = isChecked('cbLoesungsblatt') || isChecked('cbLoesungUnter') || isChecked('cbLoesungSpalte');
+  // Ohne Loesung: "12) 99999 + 99999 = " ~ 2*stellen + 9 Zeichen
+  // Mit Loesung im Lblatt: "12) 99999 + 99999 = 199998" ~ 3*stellen + 11 Zeichen
+  const zeichen = schriftlich
+    ? (stellen + 4)
+    : (mitLoesung ? Math.max(2 * stellen + 9, 3 * stellen + 11 - 4) : (2 * stellen + 9));
   // Courier monospace: ~0.5em pro Zeichen real
   const charBreiteMM = fontMM * 0.5;
   const spaltenAbstand = getNum('spaltenAbstand') || 15;
